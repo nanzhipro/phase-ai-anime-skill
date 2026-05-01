@@ -4,11 +4,41 @@ prompts:
     prompt: fast push-in from freezer reflection to detective face, subtle ear twitch, rain reflection flicker, 3 seconds
     first_frame: anime/assets/images/shot-001-keyframe.png
     duration_seconds: 3
-  - shot_id: shot-002-choice
-    prompt: slow aisle tracking shot, detective turns from exit to freezer aisle, rain grows louder behind glass door, 33 seconds
+    motion_constraints:
+      - keep detective face readable in vertical safe area
+      - no camera roll
+  - shot_id: shot-002-rain-test
+    prompt: slow tilt from creeping puddle to detective's flattened cat ears, she steps backward from the rain then turns toward the freezer aisle, 9 seconds
     first_frame: anime/assets/images/shot-002-keyframe.png
-    duration_seconds: 33
-  - shot_id: shot-003-twist
-    prompt: hold on earbud reflection, waveform repeats detective voice, hard glitch cut to black, 24 seconds
+    duration_seconds: 9
+    motion_constraints:
+      - keep rain outside glass recognizable
+      - avoid changing outfit colors
+  - shot_id: shot-003-aisle-clues
+    prompt: low glide along wet footprints, magnifier enters frame, cyan waveform ripples across puddle reflections, 12 seconds
     first_frame: anime/assets/images/shot-003-keyframe.png
-    duration_seconds: 24
+    duration_seconds: 12
+    motion_constraints:
+      - footprints appear sequentially without adding a new character
+      - preserve vertical subject lock
+  - shot_id: shot-004-freezer-reveal
+    prompt: freezer door opens with cold mist, rack focus from detective eyes to tiny earbud on frosted shelf, waveform pulses while she leans in, 12 seconds
+    first_frame: anime/assets/images/shot-004-keyframe.png
+    duration_seconds: 12
+    motion_constraints:
+      - earbud remains unbranded and clearly visible
+      - avoid warping hands around freezer handle
+  - shot_id: shot-005-water-choice
+    prompt: water spreads across tiles, detective breathes in, wraps scarf around magnifier, hooks earbud over puddle, small triumphant pullback, 13 seconds
+    first_frame: anime/assets/images/shot-005-keyframe.png
+    duration_seconds: 13
+    motion_constraints:
+      - scarf action stays readable
+      - keep feet out of the water until the hook succeeds
+  - shot_id: shot-006-twist
+    prompt: hold on earbud waveform reflected in detective pupil, waveform matches heartbeat, detective's ears rise in shock, hard glitch cut to black, 11 seconds
+    first_frame: anime/assets/images/shot-006-keyframe.png
+    duration_seconds: 11
+    motion_constraints:
+      - final cut should land before 60 seconds
+      - do not render readable brand text

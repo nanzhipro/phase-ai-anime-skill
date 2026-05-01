@@ -11,43 +11,111 @@ shots:
     action: The cat-eared detective freezes as the missing earbud whispers from off-screen.
     character_refs:
       - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
     prompt_refs:
       - anime/prompts/episode-001-image-prompts.yaml#shot-001-hook
       - anime/prompts/episode-001-video-prompts.yaml#shot-001-hook
     audio_cues:
       - cue-001-sfx-impact
       - cue-002-dialogue-whisper
-  - shot_id: shot-002-choice
+
+  - shot_id: shot-002-rain-test
     beat_ref: beat-002
     start_seconds: 3
-    end_seconds: 36
-    duration_seconds: 33
-    framing: medium shot to over-the-shoulder
-    camera: slow aisle tracking shot with vertical-safe subject lock
-    action: The detective steps away from the exit and follows the voice toward the freezer aisle.
+    end_seconds: 12
+    duration_seconds: 9
+    framing: medium shot at sliding glass door
+    camera: slow tilt from puddle to flattened cat ears
+    action: The detective stands on the dry entrance mat, sees rainwater crawl across the tiles, then chooses the freezer aisle over the exit.
     character_refs:
       - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
     prompt_refs:
-      - anime/prompts/episode-001-image-prompts.yaml#shot-002-choice
-      - anime/prompts/episode-001-video-prompts.yaml#shot-002-choice
+      - anime/prompts/episode-001-image-prompts.yaml#shot-002-rain-test
+      - anime/prompts/episode-001-video-prompts.yaml#shot-002-rain-test
     audio_cues:
       - cue-003-music-pulse
-      - cue-004-dialogue-resolve
-      - cue-005-sfx-rain-door
-  - shot_id: shot-003-twist
+      - cue-004-sfx-rain-door
+      - cue-005-dialogue-detective
+      - cue-006-sfx-ear-twitch
+
+  - shot_id: shot-003-aisle-clues
     beat_ref: beat-003
-    start_seconds: 36
-    end_seconds: 60
-    duration_seconds: 24
-    framing: extreme close-up to smash cut black
-    camera: hold on earbud reflection, then hard cut
-    action: The earbud displays a waveform that repeats the detective's own voice.
+    start_seconds: 12
+    end_seconds: 24
+    duration_seconds: 12
+    framing: vertical tracking shot down snack aisle
+    camera: low glide following wet pawless footprints
+    action: Wet footprints without heels glow under the aisle lights while the detective uses her magnifier to follow the earbud's waveform.
     character_refs:
       - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
     prompt_refs:
-      - anime/prompts/episode-001-image-prompts.yaml#shot-003-twist
-      - anime/prompts/episode-001-video-prompts.yaml#shot-003-twist
+      - anime/prompts/episode-001-image-prompts.yaml#shot-003-aisle-clues
+      - anime/prompts/episode-001-video-prompts.yaml#shot-003-aisle-clues
     audio_cues:
-      - cue-006-silence
-      - cue-007-dialogue-twist
-      - cue-008-sfx-glitch
+      - cue-007-sfx-fluorescent
+      - cue-008-sfx-wet-footsteps
+      - cue-009-dialogue-earbud-clue
+      - cue-010-dialogue-detective-deduction
+
+  - shot_id: shot-004-freezer-reveal
+    beat_ref: beat-004
+    start_seconds: 24
+    end_seconds: 36
+    duration_seconds: 12
+    framing: over-the-shoulder into freezer glow
+    camera: careful rack focus from detective eyes to earbud
+    action: She opens the freezer door and finds the earbud sitting on a frosted shelf like a piece of evidence.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-004-freezer-reveal
+      - anime/prompts/episode-001-video-prompts.yaml#shot-004-freezer-reveal
+    audio_cues:
+      - cue-011-sfx-freezer-open
+      - cue-012-music-sting
+      - cue-013-dialogue-earbud-reveal
+      - cue-014-dialogue-detective-snap
+
+  - shot_id: shot-005-water-choice
+    beat_ref: beat-005
+    start_seconds: 36
+    end_seconds: 49
+    duration_seconds: 13
+    framing: full-body vertical action shot
+    camera: handheld push with subject lock as water spreads
+    action: A ceiling leak floods the aisle; the detective trembles, wraps her blue scarf around the magnifier, and hooks the earbud without stepping into the puddle.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-005-water-choice
+      - anime/prompts/episode-001-video-prompts.yaml#shot-005-water-choice
+    audio_cues:
+      - cue-015-sfx-water-leak
+      - cue-016-music-rise
+      - cue-017-dialogue-detective-brave
+      - cue-018-sfx-scarf-swipe
+
+  - shot_id: shot-006-twist
+    beat_ref: beat-006
+    start_seconds: 49
+    end_seconds: 60
+    duration_seconds: 11
+    framing: extreme close-up to smash cut black
+    camera: hold on earbud waveform reflected in detective pupil, then hard cut
+    action: The earbud replays the detective's own voice as its waveform matches her heartbeat; the final frame cuts to black.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+      - anime/bible/concept.md#character-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-006-twist
+      - anime/prompts/episode-001-video-prompts.yaml#shot-006-twist
+    audio_cues:
+      - cue-019-silence
+      - cue-020-sfx-heartbeat
+      - cue-021-dialogue-twist
+      - cue-022-sfx-glitch
+      - cue-023-music-out

@@ -22,6 +22,106 @@
       }
     },
     {
+      "jobId": "job-image-shot-002",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-002-rain-test",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-002-rain-test",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-002-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
+      "jobId": "job-image-shot-003",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-003-aisle-clues",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-003-aisle-clues",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-003-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
+      "jobId": "job-image-shot-004",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-004-freezer-reveal",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-004-freezer-reveal",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-004-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
+      "jobId": "job-image-shot-005",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-005-water-choice",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-005-water-choice",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-005-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
+      "jobId": "job-image-shot-006",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-006-twist",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-006-twist",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-006-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
       "jobId": "job-video-shot-001",
       "kind": "video",
       "provider": "unassigned",
@@ -42,19 +142,394 @@
       }
     },
     {
-      "jobId": "job-tts-shot-001",
+      "jobId": "job-video-shot-002",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-002-rain-test",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-002-rain-test",
+        "firstFrame": "anime/assets/images/shot-002-keyframe.png",
+        "durationSeconds": 9
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-002.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-video-shot-003",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-003-aisle-clues",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-003-aisle-clues",
+        "firstFrame": "anime/assets/images/shot-003-keyframe.png",
+        "durationSeconds": 12
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-003.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-video-shot-004",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-004-freezer-reveal",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-004-freezer-reveal",
+        "firstFrame": "anime/assets/images/shot-004-keyframe.png",
+        "durationSeconds": 12
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-004.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-video-shot-005",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-005-water-choice",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-005-water-choice",
+        "firstFrame": "anime/assets/images/shot-005-keyframe.png",
+        "durationSeconds": 13
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-005.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-video-shot-006",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-006-twist",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-006-twist",
+        "firstFrame": "anime/assets/images/shot-006-keyframe.png",
+        "durationSeconds": 11
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-006.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-002",
       "kind": "tts",
       "provider": "unassigned",
       "adapterSlot": "tts_adapter",
       "input": {
         "shot_id": "shot-001-hook",
+        "cue_id": "cue-002-dialogue-whisper",
         "speaker": "earbud_voice",
         "text": "你终于听见我了。",
         "emotion": "intimate whisper",
         "language": "zh-CN"
       },
       "output": {
-        "expectedPath": "anime/assets/audio/voice/shot-001-earbud.wav",
+        "expectedPath": "anime/assets/audio/voice/cue-002-earbud.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-005",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-002-rain-test",
+        "cue_id": "cue-005-dialogue-detective",
+        "speaker": "detective",
+        "text": "我讨厌下雨，但更讨厌谜题逃走。",
+        "emotion": "afraid but determined",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-005-detective.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-009",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-003-aisle-clues",
+        "cue_id": "cue-009-dialogue-earbud-clue",
+        "speaker": "earbud_voice",
+        "text": "别踩水，水会把记忆冲走。",
+        "emotion": "calm warning",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-009-earbud.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-010",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-003-aisle-clues",
+        "cue_id": "cue-010-dialogue-detective-deduction",
+        "speaker": "detective",
+        "text": "湿脚印没有脚跟，犯人不是人。",
+        "emotion": "fast deduction",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-010-detective.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-013",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-004-freezer-reveal",
+        "cue_id": "cue-013-dialogue-earbud-reveal",
+        "speaker": "earbud_voice",
+        "text": "我不是失踪物，我是证据。",
+        "emotion": "precise reveal",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-013-earbud.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-014",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-004-freezer-reveal",
+        "cue_id": "cue-014-dialogue-detective-snap",
+        "speaker": "detective",
+        "text": "会说话还会诬告，嫌疑更大。",
+        "emotion": "cute defensive snap",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-014-detective.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-017",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-005-water-choice",
+        "cue_id": "cue-017-dialogue-detective-brave",
+        "speaker": "detective",
+        "text": "怕水不是证据，逃走才是。",
+        "emotion": "brave after a shaky breath",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-017-detective.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-cue-021",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-006-twist",
+        "cue_id": "cue-021-dialogue-twist",
+        "speaker": "earbud_voice",
+        "text": "别找耳机了。真正失踪的人，是你。",
+        "emotion": "calm reveal",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/cue-021-earbud.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-001",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-001-hook",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-001-hook",
+        "cue_ids": ["cue-001-sfx-impact", "cue-002-dialogue-whisper"],
+        "voiceJobIds": ["job-tts-cue-002"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-001.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-002",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-002-rain-test",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-002-rain-test",
+        "cue_ids": ["cue-003-music-pulse", "cue-004-sfx-rain-door", "cue-005-dialogue-detective", "cue-006-sfx-ear-twitch"],
+        "voiceJobIds": ["job-tts-cue-005"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-002.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-003",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-003-aisle-clues",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-003-aisle-clues",
+        "cue_ids": ["cue-007-sfx-fluorescent", "cue-008-sfx-wet-footsteps", "cue-009-dialogue-earbud-clue", "cue-010-dialogue-detective-deduction"],
+        "voiceJobIds": ["job-tts-cue-009", "job-tts-cue-010"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-003.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-004",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-004-freezer-reveal",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-004-freezer-reveal",
+        "cue_ids": ["cue-011-sfx-freezer-open", "cue-012-music-sting", "cue-013-dialogue-earbud-reveal", "cue-014-dialogue-detective-snap"],
+        "voiceJobIds": ["job-tts-cue-013", "job-tts-cue-014"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-004.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-005",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-005-water-choice",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-005-water-choice",
+        "cue_ids": ["cue-015-sfx-water-leak", "cue-016-music-rise", "cue-017-dialogue-detective-brave", "cue-018-sfx-scarf-swipe"],
+        "voiceJobIds": ["job-tts-cue-017"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-005.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-audio-mix-shot-006",
+      "kind": "audio_mix",
+      "provider": "unassigned",
+      "adapterSlot": "audio_mix_adapter",
+      "input": {
+        "shot_id": "shot-006-twist",
+        "timelineRef": "anime/audio/episode-001-timeline.yaml#shot-006-twist",
+        "cue_ids": ["cue-019-silence", "cue-020-sfx-heartbeat", "cue-021-dialogue-twist", "cue-022-sfx-glitch", "cue-023-music-out"],
+        "voiceJobIds": ["job-tts-cue-021"]
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/mix/shot-006.wav",
         "format": "wav"
       },
       "safety": {

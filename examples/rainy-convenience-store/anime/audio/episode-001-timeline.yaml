@@ -9,53 +9,155 @@ timeline:
         kind: sfx
         start_seconds: 0
         end_seconds: 0.5
-        text: soft impact hit
+        text: soft mystery impact hit
       - cue_id: cue-002-dialogue-whisper
         kind: dialogue
         speaker: earbud_voice
         emotion: intimate whisper
         start_seconds: 0.5
-        end_seconds: 3
+        end_seconds: 2.8
         text: 你终于听见我了。
-  - shot_id: shot-002-choice
+
+  - shot_id: shot-002-rain-test
     start_seconds: 3
-    end_seconds: 36
+    end_seconds: 12
     cues:
       - cue_id: cue-003-music-pulse
         kind: music
         start_seconds: 3
-        end_seconds: 36
+        end_seconds: 12
         text: low pulsing synth under rain ambience
-      - cue_id: cue-004-dialogue-resolve
+      - cue_id: cue-004-sfx-rain-door
+        kind: sfx
+        start_seconds: 3
+        end_seconds: 5
+        text: automatic door opens, rain gets louder
+      - cue_id: cue-005-dialogue-detective
         kind: dialogue
         speaker: detective
         emotion: afraid but determined
-        start_seconds: 9
-        end_seconds: 14
+        start_seconds: 5.2
+        end_seconds: 8.8
         text: 我讨厌下雨，但更讨厌谜题逃走。
-      - cue_id: cue-005-sfx-rain-door
+      - cue_id: cue-006-sfx-ear-twitch
         kind: sfx
-        start_seconds: 16
+        start_seconds: 9
+        end_seconds: 9.4
+        text: quick cat-ear twitch
+
+  - shot_id: shot-003-aisle-clues
+    start_seconds: 12
+    end_seconds: 24
+    cues:
+      - cue_id: cue-007-sfx-fluorescent
+        kind: sfx
+        start_seconds: 12
+        end_seconds: 13
+        text: fluorescent light buzz and flicker
+      - cue_id: cue-008-sfx-wet-footsteps
+        kind: sfx
+        start_seconds: 12.5
         end_seconds: 18
-        text: automatic door opens, rain gets louder
-  - shot_id: shot-003-twist
+        text: tiny wet prints appearing without a visible walker
+      - cue_id: cue-009-dialogue-earbud-clue
+        kind: dialogue
+        speaker: earbud_voice
+        emotion: calm warning
+        start_seconds: 13.2
+        end_seconds: 16.8
+        text: 别踩水，水会把记忆冲走。
+      - cue_id: cue-010-dialogue-detective-deduction
+        kind: dialogue
+        speaker: detective
+        emotion: fast deduction
+        start_seconds: 18.4
+        end_seconds: 21.4
+        text: 湿脚印没有脚跟，犯人不是人。
+
+  - shot_id: shot-004-freezer-reveal
+    start_seconds: 24
+    end_seconds: 36
+    cues:
+      - cue_id: cue-011-sfx-freezer-open
+        kind: sfx
+        start_seconds: 24
+        end_seconds: 25.5
+        text: freezer door seal breaks open, cold air rush
+      - cue_id: cue-012-music-sting
+        kind: music
+        start_seconds: 25.5
+        end_seconds: 27
+        text: short glassy reveal sting
+      - cue_id: cue-013-dialogue-earbud-reveal
+        kind: dialogue
+        speaker: earbud_voice
+        emotion: precise reveal
+        start_seconds: 26.5
+        end_seconds: 30
+        text: 我不是失踪物，我是证据。
+      - cue_id: cue-014-dialogue-detective-snap
+        kind: dialogue
+        speaker: detective
+        emotion: cute defensive snap
+        start_seconds: 31
+        end_seconds: 34
+        text: 会说话还会诬告，嫌疑更大。
+
+  - shot_id: shot-005-water-choice
     start_seconds: 36
+    end_seconds: 49
+    cues:
+      - cue_id: cue-015-sfx-water-leak
+        kind: sfx
+        start_seconds: 36
+        end_seconds: 41
+        text: ceiling leak becomes spreading puddle
+      - cue_id: cue-016-music-rise
+        kind: music
+        start_seconds: 36
+        end_seconds: 49
+        text: rain pulse rises with soft snare heartbeat
+      - cue_id: cue-017-dialogue-detective-brave
+        kind: dialogue
+        speaker: detective
+        emotion: brave after a shaky breath
+        start_seconds: 40
+        end_seconds: 43.2
+        text: 怕水不是证据，逃走才是。
+      - cue_id: cue-018-sfx-scarf-swipe
+        kind: sfx
+        start_seconds: 45
+        end_seconds: 47
+        text: scarf wraps magnifier and hooks the earbud
+
+  - shot_id: shot-006-twist
+    start_seconds: 49
     end_seconds: 60
     cues:
-      - cue_id: cue-006-silence
+      - cue_id: cue-019-silence
         kind: silence
-        start_seconds: 36
-        end_seconds: 37
-        text: one beat of silence
-      - cue_id: cue-007-dialogue-twist
+        start_seconds: 49
+        end_seconds: 50
+        text: one beat of silence before the confession playback
+      - cue_id: cue-020-sfx-heartbeat
+        kind: sfx
+        start_seconds: 50
+        end_seconds: 52
+        text: tiny heartbeat inside the earbud waveform
+      - cue_id: cue-021-dialogue-twist
         kind: dialogue
         speaker: earbud_voice
         emotion: calm reveal
-        start_seconds: 37
-        end_seconds: 55
+        start_seconds: 50.5
+        end_seconds: 56
         text: 别找耳机了。真正失踪的人，是你。
-      - cue_id: cue-008-sfx-glitch
+      - cue_id: cue-022-sfx-glitch
         kind: sfx
-        start_seconds: 58
-        end_seconds: 60
+        start_seconds: 56
+        end_seconds: 59
         text: glitch cut to black
+      - cue_id: cue-023-music-out
+        kind: music
+        start_seconds: 59
+        end_seconds: 60
+        text: single low note tail into silence

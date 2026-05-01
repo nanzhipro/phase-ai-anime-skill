@@ -2,34 +2,67 @@
   "episode": "episode-001",
   "runtimeSeconds": 60,
   "aspectRatio": "9:16",
+  "language": "zh-CN",
   "clips": [
     {
       "shot_id": "shot-001-hook",
       "expected_video_job_id": "job-video-shot-001",
-      "expected_audio_job_ids": ["job-tts-shot-001"],
+      "expected_audio_job_ids": ["job-audio-mix-shot-001"],
       "start_seconds": 0,
       "end_seconds": 3,
       "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-001-hook"
     },
     {
-      "shot_id": "shot-002-choice",
-      "expected_video_job_id": "pending-video-shot-002",
-      "expected_audio_job_ids": [],
+      "shot_id": "shot-002-rain-test",
+      "expected_video_job_id": "job-video-shot-002",
+      "expected_audio_job_ids": ["job-audio-mix-shot-002"],
       "start_seconds": 3,
-      "end_seconds": 36,
-      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-002-choice"
+      "end_seconds": 12,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-002-rain-test"
     },
     {
-      "shot_id": "shot-003-twist",
-      "expected_video_job_id": "pending-video-shot-003",
-      "expected_audio_job_ids": [],
+      "shot_id": "shot-003-aisle-clues",
+      "expected_video_job_id": "job-video-shot-003",
+      "expected_audio_job_ids": ["job-audio-mix-shot-003"],
+      "start_seconds": 12,
+      "end_seconds": 24,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-003-aisle-clues"
+    },
+    {
+      "shot_id": "shot-004-freezer-reveal",
+      "expected_video_job_id": "job-video-shot-004",
+      "expected_audio_job_ids": ["job-audio-mix-shot-004"],
+      "start_seconds": 24,
+      "end_seconds": 36,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-004-freezer-reveal"
+    },
+    {
+      "shot_id": "shot-005-water-choice",
+      "expected_video_job_id": "job-video-shot-005",
+      "expected_audio_job_ids": ["job-audio-mix-shot-005"],
       "start_seconds": 36,
+      "end_seconds": 49,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-005-water-choice"
+    },
+    {
+      "shot_id": "shot-006-twist",
+      "expected_video_job_id": "job-video-shot-006",
+      "expected_audio_job_ids": ["job-audio-mix-shot-006"],
+      "start_seconds": 49,
       "end_seconds": 60,
-      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-003-twist"
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-006-twist"
     }
   ],
-  "knownGaps": [
-    "Only shot-001 has sample image/video/tts jobs; remaining shots demonstrate pending job expansion."
+  "expectedAssetRoots": [
+    "anime/assets/images/",
+    "anime/assets/video/",
+    "anime/assets/audio/voice/",
+    "anime/assets/audio/mix/"
+  ],
+  "openHumanDecisions": [
+    "Choose provider adapters for image, image-to-video, TTS, and audio mixing.",
+    "Approve authentication, cost, input upload boundaries, and output rights before real generation.",
+    "Review generated lip-sync, water continuity, and final publish readiness after media exists."
   ],
   "releaseDecision": "human-required"
 }

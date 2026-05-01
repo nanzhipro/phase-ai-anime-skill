@@ -95,7 +95,7 @@ const workflow = buildAnimeDramaWorkflow({
 - [profiles/README.md](./profiles/README.md) — profile 层说明
 - [profiles/examples.md](./profiles/examples.md) — profile + overlay 展开示例
 - [profiles/overlays.yaml](./profiles/overlays.yaml) — 可插拔 overlay
-- [examples/rainy-convenience-store](./examples/rainy-convenience-store) — 离线 smoke example
+- [examples/rainy-convenience-store](./examples/rainy-convenience-store) — 完整离线 60 秒竖屏样片包
 
 ## 安装
 

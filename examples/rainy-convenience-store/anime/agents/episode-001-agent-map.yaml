@@ -1,6 +1,6 @@
 episode: episode-001
 agent_map_version: 1
-purpose: Map phase, node, and adapter responsibilities for the offline smoke episode.
+purpose: Map phase, node, and adapter responsibilities for the complete offline 60-second episode package.
 agents:
   - id: phase-concept-agent
     role: phase
@@ -9,12 +9,16 @@ agents:
     input_artifacts: []
     output_artifacts:
       - anime/bible/concept.md
+      - anime/scripts/episode-001-dialogue.md
     required_artifacts:
       - anime/bible/concept.md
+      - anime/scripts/episode-001-dialogue.md
     handoff_artifacts:
       - anime/bible/concept.md
+      - anime/scripts/episode-001-dialogue.md
     quality_gates:
-      - Concept includes premise, audience, duration, aspect ratio, non-goals, and model-call depth.
+      - Concept includes premise, audience, duration, aspect ratio, character anchors, non-goals, and model-call depth.
+      - Dialogue script includes beat sheet, subtitle text, speaker, and voice direction.
 
   - id: shot-storyboard-agent
     role: node
@@ -36,26 +40,53 @@ agents:
         - beat-001
         - beat-002
         - beat-003
+        - beat-004
+        - beat-005
+        - beat-006
       shot_ids:
         - shot-001-hook
-        - shot-002-choice
-        - shot-003-twist
+        - shot-002-rain-test
+        - shot-003-aisle-clues
+        - shot-004-freezer-reveal
+        - shot-005-water-choice
+        - shot-006-twist
       audio_cue_ids:
         - cue-001-sfx-impact
         - cue-002-dialogue-whisper
         - cue-003-music-pulse
-        - cue-004-dialogue-resolve
-        - cue-005-sfx-rain-door
-        - cue-006-silence
-        - cue-007-dialogue-twist
-        - cue-008-sfx-glitch
+        - cue-004-sfx-rain-door
+        - cue-005-dialogue-detective
+        - cue-006-sfx-ear-twitch
+        - cue-007-sfx-fluorescent
+        - cue-008-sfx-wet-footsteps
+        - cue-009-dialogue-earbud-clue
+        - cue-010-dialogue-detective-deduction
+        - cue-011-sfx-freezer-open
+        - cue-012-music-sting
+        - cue-013-dialogue-earbud-reveal
+        - cue-014-dialogue-detective-snap
+        - cue-015-sfx-water-leak
+        - cue-016-music-rise
+        - cue-017-dialogue-detective-brave
+        - cue-018-sfx-scarf-swipe
+        - cue-019-silence
+        - cue-020-sfx-heartbeat
+        - cue-021-dialogue-twist
+        - cue-022-sfx-glitch
+        - cue-023-music-out
       prompt_refs:
         - anime/prompts/episode-001-image-prompts.yaml#shot-001-hook
         - anime/prompts/episode-001-video-prompts.yaml#shot-001-hook
-        - anime/prompts/episode-001-image-prompts.yaml#shot-002-choice
-        - anime/prompts/episode-001-video-prompts.yaml#shot-002-choice
-        - anime/prompts/episode-001-image-prompts.yaml#shot-003-twist
-        - anime/prompts/episode-001-video-prompts.yaml#shot-003-twist
+        - anime/prompts/episode-001-image-prompts.yaml#shot-002-rain-test
+        - anime/prompts/episode-001-video-prompts.yaml#shot-002-rain-test
+        - anime/prompts/episode-001-image-prompts.yaml#shot-003-aisle-clues
+        - anime/prompts/episode-001-video-prompts.yaml#shot-003-aisle-clues
+        - anime/prompts/episode-001-image-prompts.yaml#shot-004-freezer-reveal
+        - anime/prompts/episode-001-video-prompts.yaml#shot-004-freezer-reveal
+        - anime/prompts/episode-001-image-prompts.yaml#shot-005-water-choice
+        - anime/prompts/episode-001-video-prompts.yaml#shot-005-water-choice
+        - anime/prompts/episode-001-image-prompts.yaml#shot-006-twist
+        - anime/prompts/episode-001-video-prompts.yaml#shot-006-twist
 
   - id: audio-timeline-agent
     role: node
@@ -76,17 +107,35 @@ agents:
     traceability:
       shot_ids:
         - shot-001-hook
-        - shot-002-choice
-        - shot-003-twist
+        - shot-002-rain-test
+        - shot-003-aisle-clues
+        - shot-004-freezer-reveal
+        - shot-005-water-choice
+        - shot-006-twist
       audio_cue_ids:
         - cue-001-sfx-impact
         - cue-002-dialogue-whisper
         - cue-003-music-pulse
-        - cue-004-dialogue-resolve
-        - cue-005-sfx-rain-door
-        - cue-006-silence
-        - cue-007-dialogue-twist
-        - cue-008-sfx-glitch
+        - cue-004-sfx-rain-door
+        - cue-005-dialogue-detective
+        - cue-006-sfx-ear-twitch
+        - cue-007-sfx-fluorescent
+        - cue-008-sfx-wet-footsteps
+        - cue-009-dialogue-earbud-clue
+        - cue-010-dialogue-detective-deduction
+        - cue-011-sfx-freezer-open
+        - cue-012-music-sting
+        - cue-013-dialogue-earbud-reveal
+        - cue-014-dialogue-detective-snap
+        - cue-015-sfx-water-leak
+        - cue-016-music-rise
+        - cue-017-dialogue-detective-brave
+        - cue-018-sfx-scarf-swipe
+        - cue-019-silence
+        - cue-020-sfx-heartbeat
+        - cue-021-dialogue-twist
+        - cue-022-sfx-glitch
+        - cue-023-music-out
 
   - id: generation-job-specs-agent
     role: node
@@ -105,14 +154,44 @@ agents:
       - anime/jobs/episode-001-generation-jobs.json
     quality_gates:
       - Jobs stay provider unassigned and contain no credentials.
+      - Every storyboard shot has image, video, and audio mix jobs.
+      - Dialogue cues have TTS jobs.
       - Job shot ids come from storyboard shot ids.
     traceability:
       shot_ids:
         - shot-001-hook
+        - shot-002-rain-test
+        - shot-003-aisle-clues
+        - shot-004-freezer-reveal
+        - shot-005-water-choice
+        - shot-006-twist
       job_ids:
         - job-image-shot-001
+        - job-image-shot-002
+        - job-image-shot-003
+        - job-image-shot-004
+        - job-image-shot-005
+        - job-image-shot-006
         - job-video-shot-001
-        - job-tts-shot-001
+        - job-video-shot-002
+        - job-video-shot-003
+        - job-video-shot-004
+        - job-video-shot-005
+        - job-video-shot-006
+        - job-tts-cue-002
+        - job-tts-cue-005
+        - job-tts-cue-009
+        - job-tts-cue-010
+        - job-tts-cue-013
+        - job-tts-cue-014
+        - job-tts-cue-017
+        - job-tts-cue-021
+        - job-audio-mix-shot-001
+        - job-audio-mix-shot-002
+        - job-audio-mix-shot-003
+        - job-audio-mix-shot-004
+        - job-audio-mix-shot-005
+        - job-audio-mix-shot-006
 
   - id: image-generation-adapter-agent
     role: adapter
@@ -137,6 +216,76 @@ agents:
       - input_assets
       - output_rights
 
+  - id: image-to-video-adapter-agent
+    role: adapter
+    adapter_slot: image_to_video_adapter
+    purpose: Translate approved image-to-video jobs to a concrete provider after human confirmation.
+    input_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+      - anime/prompts/episode-001-video-prompts.yaml
+      - anime/assets/images/**
+    output_artifacts:
+      - anime/assets/video/**
+    required_artifacts:
+      - anime/assets/video/**
+    handoff_artifacts:
+      - anime/assets/video/**
+    quality_gates:
+      - Generated video durations match storyboard durations.
+      - Character outfit, ear shape, and earbud continuity survive motion.
+    human_approval_gates:
+      - provider
+      - authentication
+      - cost
+      - input_assets
+      - output_rights
+
+  - id: tts-adapter-agent
+    role: adapter
+    adapter_slot: tts_adapter
+    purpose: Translate approved dialogue cue jobs to concrete TTS provider calls after human confirmation.
+    input_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+      - anime/scripts/episode-001-dialogue.md
+      - anime/audio/episode-001-timeline.yaml
+    output_artifacts:
+      - anime/assets/audio/voice/**
+    required_artifacts:
+      - anime/assets/audio/voice/**
+    handoff_artifacts:
+      - anime/assets/audio/voice/**
+    quality_gates:
+      - Voice assets match cue text and time ranges.
+      - Earbud voice stays electronic and unbranded.
+    human_approval_gates:
+      - provider
+      - authentication
+      - cost
+      - voice_rights
+
+  - id: audio-mix-adapter-agent
+    role: adapter
+    adapter_slot: audio_mix_adapter
+    purpose: Build per-shot audio mixes from approved TTS, SFX, music, silence, and timeline cue specs.
+    input_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+      - anime/audio/episode-001-timeline.yaml
+      - anime/assets/audio/voice/**
+    output_artifacts:
+      - anime/assets/audio/mix/**
+    required_artifacts:
+      - anime/assets/audio/mix/**
+    handoff_artifacts:
+      - anime/assets/audio/mix/**
+    quality_gates:
+      - Mixes preserve cue timing from the timeline.
+      - Dialogue remains intelligible under rain ambience.
+    human_approval_gates:
+      - provider
+      - authentication
+      - cost
+      - music_rights
+
   - id: assembly-qc-agent
     role: node
     owner_phase_id: phase-8-assembly-qc
@@ -160,5 +309,8 @@ agents:
     traceability:
       shot_ids:
         - shot-001-hook
-        - shot-002-choice
-        - shot-003-twist
+        - shot-002-rain-test
+        - shot-003-aisle-clues
+        - shot-004-freezer-reveal
+        - shot-005-water-choice
+        - shot-006-twist

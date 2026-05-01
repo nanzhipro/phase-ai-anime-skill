@@ -19,7 +19,9 @@ project_profile:
     min: 3
     max: 6
   delivery_paths:
+    - anime/scripts/**/*.md
     - anime/storyboard/**/*.yaml
+    - anime/prompts/**/*.yaml
     - anime/audio/**/*.yaml
     - anime/jobs/**/*.json
     - anime/assembly/**/*.json

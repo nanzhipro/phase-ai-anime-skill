@@ -22,6 +22,29 @@ class ExampleSmokeTest < Minitest::Test
     assert_equal shot_ids, timeline_shot_ids
     assert (job_shot_ids - shot_ids).empty?, 'job shot ids must come from storyboard'
     assert_equal shot_ids, assembly_shot_ids
+
+    assert_equal 60, storyboard.fetch('runtime_seconds')
+    assert_equal 60, timeline.fetch('runtime_seconds')
+    assert_equal 60, assembly.fetch('runtimeSeconds')
+
+    jobs_by_kind_and_shot = jobs.fetch('jobs').group_by do |job|
+      [job.fetch('kind'), job.fetch('input').fetch('shot_id')]
+    end
+    shot_ids.each do |shot_id|
+      assert jobs_by_kind_and_shot.key?(['image', shot_id]), "missing image job for #{shot_id}"
+      assert jobs_by_kind_and_shot.key?(['video', shot_id]), "missing video job for #{shot_id}"
+      assert jobs_by_kind_and_shot.key?(['audio_mix', shot_id]), "missing audio mix job for #{shot_id}"
+    end
+
+    dialogue_cues = timeline.fetch('timeline').flat_map do |entry|
+      entry.fetch('cues')
+           .select { |cue| cue.fetch('kind') == 'dialogue' }
+           .map { |cue| cue.fetch('cue_id') }
+    end
+    tts_cues = jobs.fetch('jobs')
+                  .select { |job| job.fetch('kind') == 'tts' }
+                  .map { |job| job.fetch('input').fetch('cue_id') }
+    assert_equal dialogue_cues, tts_cues
   end
 
   def test_generation_jobs_are_provider_neutral_and_secret_free
@@ -67,6 +90,9 @@ class ExampleSmokeTest < Minitest::Test
     assert_empty jobs_agent.fetch('traceability').fetch('shot_ids') - shot_ids
     assert_equal job_ids, jobs_agent.fetch('traceability').fetch('job_ids')
 
+    assembly_agent = find_agent(agents, 'assembly-qc-agent')
+    assert_equal shot_ids, assembly_agent.fetch('traceability').fetch('shot_ids')
+
     adapter_agent = find_agent(agents, 'image-generation-adapter-agent')
     assert_equal 'image_generation_adapter', adapter_agent.fetch('adapter_slot')
   end
@@ -77,8 +103,11 @@ class ExampleSmokeTest < Minitest::Test
       plan/manifest.yaml
       plan/common.md
       anime/bible/concept.md
+      anime/scripts/episode-001-dialogue.md
       anime/storyboard/episode-001-shots.yaml
       anime/audio/episode-001-timeline.yaml
+      anime/prompts/episode-001-image-prompts.yaml
+      anime/prompts/episode-001-video-prompts.yaml
       anime/agents/episode-001-agent-map.yaml
       anime/jobs/episode-001-generation-jobs.json
       anime/assembly/episode-001-assembly.json

@@ -1,11 +1,26 @@
 episode: episode-001
 prompts:
   - shot_id: shot-001-hook
-    prompt: cat-eared anime detective in yellow raincoat, blue scarf, freezer aisle reflection, midnight convenience store, rain neon, vertical close-up, expressive startled eyes
-    negative_prompt: realistic human photo, logo, watermark, extra ears, unreadable face
-  - shot_id: shot-002-choice
-    prompt: cat-eared detective choosing to walk away from exit toward glowing freezer aisle, neon rain reflections, vertical medium shot, cinematic anime line art
-    negative_prompt: crowded background, brand logos, distorted hands, inconsistent outfit
-  - shot_id: shot-003-twist
-    prompt: tiny earbud on freezer shelf reflecting detective face, waveform glow, suspense anime extreme close-up, clean line art
-    negative_prompt: horror gore, unreadable object, photorealism, broken text
+    prompt: cat-eared anime detective in yellow raincoat and blue scarf, black bob haircut, small magnifier, freezer aisle reflection, midnight convenience store, rain neon, vertical close-up, expressive startled eyes, cyan waveform glow from off-screen earbud, clean anime line art
+    negative_prompt: realistic human photo, logo, watermark, extra ears, unreadable face, inconsistent raincoat, brand marks
+    seed_strategy: lock detective outfit and ear shape for all shots
+  - shot_id: shot-002-rain-test
+    prompt: cat-eared detective standing on dry entrance mat inside convenience store, automatic glass door open to heavy rain, puddle creeping across tile floor, ears flattened with fear, yellow raincoat blue scarf, vertical medium shot, suspense comedy anime lighting
+    negative_prompt: crowded background, brand logos, distorted hands, inconsistent outfit, dry exterior, photorealism
+    seed_strategy: reuse detective character seed from shot-001
+  - shot_id: shot-003-aisle-clues
+    prompt: low vertical tracking composition down convenience store snack aisle, glowing wet footprints without heels, cat-eared detective crouches with small magnifier, cyan waveform reflected on wet tiles, neon rain visible through glass, clean anime line art
+    negative_prompt: messy shelves, readable brand labels, extra characters, horror gore, muddy composition
+    seed_strategy: reuse detective character seed and store palette
+  - shot_id: shot-004-freezer-reveal
+    prompt: over-the-shoulder view of cat-eared detective opening freezer door, tiny white talking earbud on frosted shelf with cyan waveform glow, cold mist, yellow raincoat and blue scarf visible, midnight anime convenience store, vertical composition
+    negative_prompt: branded earbud, unreadable object, extra ears, distorted fingers, photorealistic product render
+    seed_strategy: keep earbud shape simple and unbranded
+  - shot_id: shot-005-water-choice
+    prompt: full-body vertical action shot, ceiling leak flooding convenience store aisle, cat-eared detective trembling but determined, blue scarf wrapped around magnifier to hook tiny earbud over puddle, yellow raincoat, dynamic anime motion, readable silhouette
+    negative_prompt: slapstick fall, gore, crowded aisle, tangled limbs, inconsistent scarf color, unreadable action
+    seed_strategy: reuse detective and earbud anchors; emphasize scarf action
+  - shot_id: shot-006-twist
+    prompt: extreme close-up of tiny white earbud in detective hand, cyan waveform reflected in detective pupil, rain neon and freezer light, shocked cat ear silhouette, suspense anime final frame, hard black edge for cut
+    negative_prompt: horror gore, branded electronics, photorealism, broken text, unreadable waveform, extra eyes
+    seed_strategy: reuse earbud shape and detective eye color from earlier shots

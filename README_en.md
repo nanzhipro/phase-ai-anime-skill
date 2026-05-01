@@ -99,7 +99,7 @@ npm run lint
 - [references/provider-adapter-contracts.md](./references/provider-adapter-contracts.md) - provider adapter and Adapter Agent contracts
 - [profiles/README.md](./profiles/README.md) - profile layer
 - [profiles/examples.md](./profiles/examples.md) - profile and overlay expansion examples
-- [examples/rainy-convenience-store](./examples/rainy-convenience-store) - offline smoke example
+- [examples/rainy-convenience-store](./examples/rainy-convenience-store) - complete offline 60-second vertical example package
 
 ## License
 
