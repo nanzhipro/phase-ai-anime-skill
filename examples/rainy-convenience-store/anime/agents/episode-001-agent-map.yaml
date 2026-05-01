@@ -1,0 +1,164 @@
+episode: episode-001
+agent_map_version: 1
+purpose: Map phase, node, and adapter responsibilities for the offline smoke episode.
+agents:
+  - id: phase-concept-agent
+    role: phase
+    owner_phase_id: phase-0-concept-promise
+    purpose: Own the promise, audience, target format, and production boundaries.
+    input_artifacts: []
+    output_artifacts:
+      - anime/bible/concept.md
+    required_artifacts:
+      - anime/bible/concept.md
+    handoff_artifacts:
+      - anime/bible/concept.md
+    quality_gates:
+      - Concept includes premise, audience, duration, aspect ratio, non-goals, and model-call depth.
+
+  - id: shot-storyboard-agent
+    role: node
+    owner_phase_id: phase-4-shot-storyboard
+    node_id: shot_storyboard
+    purpose: Turn beats and dialogue intent into traceable shot cards.
+    input_artifacts:
+      - anime/bible/concept.md
+    output_artifacts:
+      - anime/storyboard/episode-001-shots.yaml
+    required_artifacts:
+      - anime/storyboard/episode-001-shots.yaml
+    handoff_artifacts:
+      - anime/storyboard/episode-001-shots.yaml
+    quality_gates:
+      - Every storyboard shot has a beat ref, character ref, action, audio cues, and prompt refs.
+    traceability:
+      beat_refs:
+        - beat-001
+        - beat-002
+        - beat-003
+      shot_ids:
+        - shot-001-hook
+        - shot-002-choice
+        - shot-003-twist
+      audio_cue_ids:
+        - cue-001-sfx-impact
+        - cue-002-dialogue-whisper
+        - cue-003-music-pulse
+        - cue-004-dialogue-resolve
+        - cue-005-sfx-rain-door
+        - cue-006-silence
+        - cue-007-dialogue-twist
+        - cue-008-sfx-glitch
+      prompt_refs:
+        - anime/prompts/episode-001-image-prompts.yaml#shot-001-hook
+        - anime/prompts/episode-001-video-prompts.yaml#shot-001-hook
+        - anime/prompts/episode-001-image-prompts.yaml#shot-002-choice
+        - anime/prompts/episode-001-video-prompts.yaml#shot-002-choice
+        - anime/prompts/episode-001-image-prompts.yaml#shot-003-twist
+        - anime/prompts/episode-001-video-prompts.yaml#shot-003-twist
+
+  - id: audio-timeline-agent
+    role: node
+    owner_phase_id: phase-6-audio-timeline
+    node_id: audio_timeline
+    purpose: Align dialogue, SFX, music, silence, subtitles, and action hit points on one timeline.
+    input_artifacts:
+      - anime/storyboard/episode-001-shots.yaml
+    output_artifacts:
+      - anime/audio/episode-001-timeline.yaml
+    required_artifacts:
+      - anime/audio/episode-001-timeline.yaml
+    handoff_artifacts:
+      - anime/audio/episode-001-timeline.yaml
+    quality_gates:
+      - Timeline covers the same shot ids as the storyboard.
+      - Dialogue cues include speaker, text, emotion, and time range.
+    traceability:
+      shot_ids:
+        - shot-001-hook
+        - shot-002-choice
+        - shot-003-twist
+      audio_cue_ids:
+        - cue-001-sfx-impact
+        - cue-002-dialogue-whisper
+        - cue-003-music-pulse
+        - cue-004-dialogue-resolve
+        - cue-005-sfx-rain-door
+        - cue-006-silence
+        - cue-007-dialogue-twist
+        - cue-008-sfx-glitch
+
+  - id: generation-job-specs-agent
+    role: node
+    owner_phase_id: phase-7-generation-job-specs
+    node_id: generation_job_specs
+    purpose: Export provider-neutral image, video, and TTS jobs for the traceable shots.
+    input_artifacts:
+      - anime/prompts/episode-001-image-prompts.yaml
+      - anime/prompts/episode-001-video-prompts.yaml
+      - anime/audio/episode-001-timeline.yaml
+    output_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+    required_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+    handoff_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+    quality_gates:
+      - Jobs stay provider unassigned and contain no credentials.
+      - Job shot ids come from storyboard shot ids.
+    traceability:
+      shot_ids:
+        - shot-001-hook
+      job_ids:
+        - job-image-shot-001
+        - job-video-shot-001
+        - job-tts-shot-001
+
+  - id: image-generation-adapter-agent
+    role: adapter
+    adapter_slot: image_generation_adapter
+    purpose: Translate approved image jobs to a concrete provider after human confirmation.
+    input_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+      - anime/prompts/episode-001-image-prompts.yaml
+    output_artifacts:
+      - anime/assets/images/**
+    required_artifacts:
+      - anime/assets/images/**
+    handoff_artifacts:
+      - anime/assets/images/**
+    quality_gates:
+      - Adapter reads provider-neutral jobs only after human provider approval.
+      - Credentials are resolved outside the repository.
+    human_approval_gates:
+      - provider
+      - authentication
+      - cost
+      - input_assets
+      - output_rights
+
+  - id: assembly-qc-agent
+    role: node
+    owner_phase_id: phase-8-assembly-qc
+    node_id: assembly_manifest
+    purpose: Connect expected media assets, subtitle source, timing, known gaps, and release decision status.
+    input_artifacts:
+      - anime/jobs/episode-001-generation-jobs.json
+      - anime/audio/episode-001-timeline.yaml
+    output_artifacts:
+      - anime/assembly/episode-001-assembly.json
+      - anime/review/episode-001-qc.md
+    required_artifacts:
+      - anime/assembly/episode-001-assembly.json
+      - anime/review/episode-001-qc.md
+    handoff_artifacts:
+      - anime/assembly/episode-001-assembly.json
+      - anime/review/episode-001-qc.md
+    quality_gates:
+      - Assembly clips cover every storyboard shot in order.
+      - Release decision remains human-required.
+    traceability:
+      shot_ids:
+        - shot-001-hook
+        - shot-002-choice
+        - shot-003-twist

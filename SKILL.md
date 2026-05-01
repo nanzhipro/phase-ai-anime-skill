@@ -36,6 +36,7 @@ argument-hint: "(optional) target project path, one-line anime drama premise, ta
 - 镜头级 image prompt、video prompt、negative prompt、参考图占位和 seed 策略。
 - TTS、SFX、音乐和字幕 cue 的统一时间轴。
 - provider-agnostic generation job specs，后续可替换为 OpenAI、Gemini/Veo、Runway、Luma、Kling、Pika、ElevenLabs、本地 ComfyUI/AnimateDiff/FFmpeg 等适配器。
+- Phase/Node/Adapter agent 合同，保证每个 phase、创作节点和 provider 接入点都能独立交接。
 - final assembly manifest，供人工或工具链合成最终 AI 动漫视频。
 
 ## Core Principles
@@ -88,6 +89,8 @@ argument-hint: "(optional) target project path, one-line anime drama premise, ta
 8. `phase-7-generation-job-specs`：image/video/audio provider job specs 和可替换适配器入口。
 9. `phase-8-assembly-qc`：最终合成 manifest、质检表、发布包和下一轮修订建议。
 
+每个 phase 派生一个 Phase Agent；每个 workflow 创作节点派生一个 Node Agent；每个 provider adapter slot 派生一个 Adapter Agent。Agent 只扩展交接与验证语义，不绕过 phase-contract 和 provider-neutral 边界。
+
 future phase 先生成成对占位合同；只有当前 phase 和准备立即执行的 phase 写正式合同。
 
 ### Step 2: 生成骨架文件
@@ -114,6 +117,7 @@ future phase 先生成成对占位合同；只有当前 phase 和准备立即执
     ├── storyboard/
     ├── prompts/
     ├── audio/
+    ├── agents/
     ├── jobs/
     ├── assembly/
     └── final/
@@ -149,6 +153,8 @@ const blueprint = buildAnimeDramaWorkflow({
 
 `buildAnimeDramaWorkflow` 不调用外部模型，只返回 phase、node graph、artifact plan、provider job contract 和 sample timeline，方便先跑通 0 到 1。
 
+蓝图同时包含 `agents`：Phase Agent 负责阶段合同与 handoff，Node Agent 负责创作节点输入输出，Adapter Agent 负责人工确认后的 provider 接入。
+
 ### Step 5: Golden Loop
 
 ```bash
@@ -167,6 +173,7 @@ ruby scripts/planctl finalize
 - [ ] 分镜 phase 每个镜头都有 `shot_id`、时长、构图、动作、台词/音频 cue、视觉 prompt 入口。
 - [ ] 音频 phase 覆盖 TTS、SFX、音乐、字幕和 silence/pause。
 - [ ] generation job specs 不包含真实密钥，不绑定单一 provider。
+- [ ] 每个 phase、workflow node 和 adapter slot 都有对应 AgentSpec 或 agent map 条目。
 - [ ] final assembly manifest 能从镜头、音频、字幕、视频片段路径重建成片结构。
 - [ ] `.github/copilot-instructions.md`、`CLAUDE.md`、`AGENTS.md` 三份字节一致。
 - [ ] `src` 的 build/test 通过。

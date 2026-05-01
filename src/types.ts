@@ -21,6 +21,8 @@ export type WorkflowNodeType =
   | 'assembly'
   | 'review';
 
+export type AgentRole = 'phase' | 'node' | 'adapter';
+
 export type ProviderKind =
   | 'image'
   | 'video'
@@ -86,6 +88,31 @@ export interface WorkflowNode {
   dependsOn: string[];
   optional: boolean;
   deletable: boolean;
+}
+
+export interface AgentHandoff {
+  producedArtifacts: string[];
+  nextAgentIds: string[];
+  notes: string[];
+}
+
+export interface AgentSpec {
+  id: string;
+  label: string;
+  role: AgentRole;
+  purpose: string;
+  ownerPhaseId?: string;
+  nodeId?: string;
+  adapterSlot?: string;
+  inputs: string[];
+  outputs: string[];
+  allowedPaths: string[];
+  requiredArtifacts: string[];
+  qualityGates: string[];
+  handoffArtifacts: string[];
+  forbiddenActions: string[];
+  humanApprovalGates: string[];
+  handoff: AgentHandoff;
 }
 
 export interface ArtifactPlan {
@@ -179,6 +206,7 @@ export interface AnimeDramaBlueprint {
   overlays: string[];
   phases: PhaseDefinition[];
   nodes: WorkflowNode[];
+  agents: AgentSpec[];
   artifacts: ArtifactPlan[];
   sampleTimeline: ShotTimeline[];
   providerContracts: ProviderContract[];

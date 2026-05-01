@@ -88,6 +88,42 @@ artifact_checks:
 
 这些 gate 不是为了证明成片好看，而是证明当前 phase 的基础制品存在、可追溯、没有占位符和密钥污染。更细的结构校验可以在后续 adapter 或 smoke project 阶段追加。
 
+## Agent Implementation Pattern
+
+每个正式 phase 都应该能派生一个 `PhaseAgent`，每个创作节点都应该能派生一个 `NodeAgent`。它们不是替代 phase/execution 合同，而是把合同变成可交给独立 Agent 接手的最小执行单元。
+
+### PhaseAgent 字段
+
+- `id`: `<phase-id>-agent`
+- `role`: `phase`
+- `ownerPhaseId`: 对应 phase id
+- `inputs`: 前置 phase 的 `requiredArtifacts`
+- `outputs`: 当前 phase 的 `requiredArtifacts`
+- `allowedPaths`: 来自 execution 白名单或当前 phase 产出路径
+- `qualityGates`: 当前 phase 的完成判定
+- `handoffArtifacts`: 下游恢复必须读取的制品
+- `forbiddenActions`: 本 phase 明确不做与全局禁止项
+- `humanApprovalGates`: 真实 provider 调用、发布、商用、打 tag、归档等人工决策
+
+### NodeAgent 字段
+
+- `id`: `<workflow-node-id>-agent`
+- `role`: `node`
+- `nodeId`: 对应 workflow node id
+- `ownerPhaseId`: 产出该节点制品的 phase id
+- `inputs`: 上游节点输出的 artifacts
+- `outputs`: 本节点负责生成的 artifacts
+- `requiredArtifacts`: 下游继续执行前必须存在的 artifacts
+- `qualityGates`: 节点级结构检查，例如 shot id、audio cue、prompt ref、job id 是否可追溯
+- `handoffArtifacts`: 下一个节点 Agent 需要读取的文件
+
+### 调度规则
+
+- 一个 phase 可以包含多个 NodeAgent；不要把 phase 和 node 简单一一等同。
+- 插入 workflow node 时必须同步声明新的 NodeAgent，或明确复用已有 AgentSpec。
+- 删除 workflow node 前必须检查下游 Agent 的 `inputs` 是否仍能由其他节点或 artifact 满足。
+- Overlay 若新增 phase 或 artifact，也必须补充或调整相关 AgentSpec。
+
 ## 执行合同：`plan/execution/phase-X-<slug>.md`
 
 ```markdown

@@ -22,6 +22,7 @@ MVP 先不真实调用模型，而是输出一套可以交给任何 provider 的
 - 单集 beat sheet、台词稿、字幕策略和 TTS 方向。
 - 镜头级 storyboard、image prompt、video prompt、negative prompt、参考图占位。
 - 音画统一时间轴：镜头、动作、台词、SFX、音乐、字幕都在同一条 timeline 上。
+- Phase/Node/Adapter agent 合同，让每个阶段、创作节点和模型接入点都能独立交接。
 - provider-agnostic generation job specs，后续可接 OpenAI、Gemini/Veo、Runway、Luma、Kling、Pika、ElevenLabs、本地 ComfyUI/FFmpeg 等。
 - final assembly manifest，用于剪辑、质检和发布包整理。
 
@@ -80,6 +81,8 @@ const workflow = buildAnimeDramaWorkflow({
 
 `workflow.nodes` 每个节点都有 `inputs`、`outputs`、`requiredArtifacts` 和 `replaceableBy`。你可以插入真人审片、替换 TTS provider、删除音乐节点或增加本地 ComfyUI 节点，只要输入输出契约不破坏，下游 phase 就能继续。
 
+`workflow.agents` 把这条链路拆成三类独立 Agent：Phase Agent 负责阶段合同与 handoff，Node Agent 负责创作节点的输入输出和质量门禁，Adapter Agent 负责人工确认后的 provider 接入。插入新节点时必须同步声明对应 Node Agent。
+
 ## 文档索引
 
 - [SKILL.md](./SKILL.md) — Skill 触发、流程和质量门禁
@@ -87,6 +90,7 @@ const workflow = buildAnimeDramaWorkflow({
 - [references/glossary.md](./references/glossary.md) — 术语表
 - [references/templates.md](./references/templates.md) — plan 模板
 - [references/phase-templates.md](./references/phase-templates.md) — phase/execution 合同模板
+- [references/provider-adapter-contracts.md](./references/provider-adapter-contracts.md) — provider/adapter 与 Adapter Agent 合同
 - [references/workflow-template.md](./references/workflow-template.md) — 生成项目的 workflow 说明
 - [profiles/README.md](./profiles/README.md) — profile 层说明
 - [profiles/examples.md](./profiles/examples.md) — profile + overlay 展开示例

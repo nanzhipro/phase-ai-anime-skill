@@ -35,6 +35,42 @@ class ExampleSmokeTest < Minitest::Test
     end
   end
 
+  def test_agent_map_tracks_phase_node_adapter_responsibilities
+    agent_map = load_yaml('anime/agents/episode-001-agent-map.yaml')
+    storyboard = load_yaml('anime/storyboard/episode-001-shots.yaml')
+    timeline = load_yaml('anime/audio/episode-001-timeline.yaml')
+    jobs = load_json('anime/jobs/episode-001-generation-jobs.json')
+
+    agents = agent_map.fetch('agents')
+    roles = agents.map { |agent| agent.fetch('role') }
+    shot_ids = storyboard.fetch('shots').map { |shot| shot.fetch('shot_id') }
+    storyboard_cue_ids = storyboard.fetch('shots').flat_map { |shot| shot.fetch('audio_cues') }
+    timeline_shot_ids = timeline.fetch('timeline').map { |entry| entry.fetch('shot_id') }
+    timeline_cue_ids = timeline.fetch('timeline').flat_map do |entry|
+      entry.fetch('cues').map { |cue| cue.fetch('cue_id') }
+    end
+    job_ids = jobs.fetch('jobs').map { |job| job.fetch('jobId') }
+
+    assert_includes roles, 'phase'
+    assert_includes roles, 'node'
+    assert_includes roles, 'adapter'
+
+    shot_agent = find_agent(agents, 'shot-storyboard-agent')
+    assert_equal shot_ids, shot_agent.fetch('traceability').fetch('shot_ids')
+    assert_equal storyboard_cue_ids, shot_agent.fetch('traceability').fetch('audio_cue_ids')
+
+    audio_agent = find_agent(agents, 'audio-timeline-agent')
+    assert_equal timeline_shot_ids, audio_agent.fetch('traceability').fetch('shot_ids')
+    assert_equal timeline_cue_ids, audio_agent.fetch('traceability').fetch('audio_cue_ids')
+
+    jobs_agent = find_agent(agents, 'generation-job-specs-agent')
+    assert_empty jobs_agent.fetch('traceability').fetch('shot_ids') - shot_ids
+    assert_equal job_ids, jobs_agent.fetch('traceability').fetch('job_ids')
+
+    adapter_agent = find_agent(agents, 'image-generation-adapter-agent')
+    assert_equal 'image_generation_adapter', adapter_agent.fetch('adapter_slot')
+  end
+
   def test_example_documentation_exists
     %w[
       README.md
@@ -43,6 +79,7 @@ class ExampleSmokeTest < Minitest::Test
       anime/bible/concept.md
       anime/storyboard/episode-001-shots.yaml
       anime/audio/episode-001-timeline.yaml
+      anime/agents/episode-001-agent-map.yaml
       anime/jobs/episode-001-generation-jobs.json
       anime/assembly/episode-001-assembly.json
       anime/review/episode-001-qc.md
@@ -70,5 +107,9 @@ class ExampleSmokeTest < Minitest::Test
     else
       []
     end
+  end
+
+  def find_agent(agents, agent_id)
+    agents.find { |agent| agent.fetch('id') == agent_id } || flunk("missing agent #{agent_id}")
   end
 end

@@ -11,8 +11,9 @@ A water-fearing cat-eared detective must recover a missing talking earbud during
 1. Start with `plan/common.md` for production constraints.
 2. Read `anime/bible/concept.md` for promise, audience, and style.
 3. Inspect `anime/storyboard/episode-001-shots.yaml` and match every `shot_id` to `anime/audio/episode-001-timeline.yaml`.
-4. Inspect `anime/jobs/episode-001-generation-jobs.json`; every job stays `provider: unassigned`.
-5. Inspect `anime/assembly/episode-001-assembly.json` to see how expected assets would be assembled after real generation.
+4. Inspect `anime/agents/episode-001-agent-map.yaml` to see which phase, node, and adapter agents own each handoff.
+5. Inspect `anime/jobs/episode-001-generation-jobs.json`; every job stays `provider: unassigned`.
+6. Inspect `anime/assembly/episode-001-assembly.json` to see how expected assets would be assembled after real generation.
 
 ## Boundary
 

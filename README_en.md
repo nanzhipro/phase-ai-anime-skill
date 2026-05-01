@@ -22,6 +22,7 @@ The MVP does not call external model APIs. It creates a provider-neutral product
 - Episode beat sheet, dialogue script, subtitle strategy, and voice direction.
 - Shot-level storyboard, image prompts, video prompts, negative prompts, reference placeholders, and seed strategy.
 - Unified audio-video timeline covering shots, action, dialogue, SFX, music, silence, and subtitles.
+- Phase/Node/Adapter agent contracts so every phase, creative node, and provider edge can be handed off independently.
 - Generation job specs that can later connect to OpenAI, Gemini/Veo, Runway, Luma, Kling, Pika, ElevenLabs, local ComfyUI, FFmpeg, or custom adapters.
 - Final assembly manifest for editing, QA, and publishing.
 
@@ -76,6 +77,10 @@ const workflow = buildAnimeDramaWorkflow({
 | 7. Generation Job Specs | Provider-neutral jobs | Enable adapters |
 | 8. Assembly QC | Assembly manifest, QA, release package | Build the final video structure |
 
+## Pluggable Agents
+
+`workflow.agents` splits the chain into three independent handoff units: Phase Agents own phase contracts and handoff, Node Agents own creative node inputs, outputs, and quality gates, and Adapter Agents own provider connections after human approval. Inserting a workflow node requires a matching Node Agent contract.
+
 ## Development
 
 ```bash
@@ -90,6 +95,8 @@ npm run lint
 - [references/methodology.md](./references/methodology.md) - AI anime drama methodology
 - [references/glossary.md](./references/glossary.md) - glossary
 - [references/templates.md](./references/templates.md) - plan templates
+- [references/phase-templates.md](./references/phase-templates.md) - phase, execution, and agent contract patterns
+- [references/provider-adapter-contracts.md](./references/provider-adapter-contracts.md) - provider adapter and Adapter Agent contracts
 - [profiles/README.md](./profiles/README.md) - profile layer
 - [profiles/examples.md](./profiles/examples.md) - profile and overlay expansion examples
 - [examples/rainy-convenience-store](./examples/rainy-convenience-store) - offline smoke example

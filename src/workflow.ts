@@ -1,4 +1,5 @@
 import {
+  AgentSpec,
   AnimeDramaBlueprint,
   AnimeDramaTarget,
   AnimeDramaWorkflowInput,
@@ -28,6 +29,7 @@ export function buildAnimeDramaWorkflow(
   const sampleTimeline = createSampleTimeline(normalized);
   const providerContracts = createProviderContracts();
   const generationJobs = createGenerationJobs(normalized, sampleTimeline);
+  const agents = createDefaultAgents(phases, nodes, artifacts, providerContracts);
 
   return {
     kind: 'phase-ai-anime-blueprint',
@@ -39,6 +41,7 @@ export function buildAnimeDramaWorkflow(
     overlays: input.overlays?.length ? input.overlays : ['character-consistency', 'audio-lipsync', 'provider-jobs'],
     phases,
     nodes,
+    agents,
     artifacts,
     sampleTimeline,
     providerContracts,
@@ -62,10 +65,20 @@ export function buildAnimeDramaWorkflow(
 export function insertWorkflowNode(
   blueprint: AnimeDramaBlueprint,
   node: WorkflowNode,
-  afterNodeId?: string
+  afterNodeId?: string,
+  agent?: AgentSpec
 ): WorkflowMutationResult {
   if (blueprint.nodes.some((existing) => existing.id === node.id)) {
     return { success: false, error: `Node already exists: ${node.id}` };
+  }
+  if (!agent) {
+    return { success: false, error: `Node agent is required for inserted node: ${node.id}` };
+  }
+  if (agent.role !== 'node' || agent.nodeId !== node.id) {
+    return { success: false, error: `Agent ${agent.id} must be a node agent for ${node.id}` };
+  }
+  if (blueprint.agents.some((existing) => existing.id === agent.id)) {
+    return { success: false, error: `Agent already exists: ${agent.id}` };
   }
 
   const insertionIndex = afterNodeId
@@ -84,6 +97,7 @@ export function insertWorkflowNode(
     workflow: {
       ...blueprint,
       nodes,
+      agents: [...blueprint.agents, agent],
     },
   };
 }
@@ -117,6 +131,7 @@ export function removeWorkflowNode(
     workflow: {
       ...blueprint,
       nodes: blueprint.nodes.filter((candidate) => candidate.id !== nodeId),
+      agents: blueprint.agents.filter((candidate) => candidate.nodeId !== nodeId),
     },
   };
 }
@@ -162,7 +177,215 @@ export function validateAnimeDramaBlueprint(
     }
   });
 
+  validateAgentSpecs(blueprint, issues);
+
   return issues;
+}
+
+function validateAgentSpecs(blueprint: AnimeDramaBlueprint, issues: string[]): void {
+  if (blueprint.agents.length === 0) {
+    issues.push('agents must contain phase, node, and adapter contracts');
+    return;
+  }
+
+  const agentIds = new Set<string>();
+  blueprint.agents.forEach((agent) => {
+    if (agentIds.has(agent.id)) {
+      issues.push(`agent id must be unique: ${agent.id}`);
+    }
+    agentIds.add(agent.id);
+
+    if (!agent.purpose.trim()) {
+      issues.push(`${agent.id} must declare a purpose`);
+    }
+    if (agent.outputs.length === 0) {
+      issues.push(`${agent.id} must declare outputs`);
+    }
+    if (agent.requiredArtifacts.length === 0) {
+      issues.push(`${agent.id} must declare requiredArtifacts`);
+    }
+    if (agent.qualityGates.length === 0) {
+      issues.push(`${agent.id} must declare qualityGates`);
+    }
+    if (agent.handoffArtifacts.length === 0) {
+      issues.push(`${agent.id} must declare handoffArtifacts`);
+    }
+    if (agent.handoff.producedArtifacts.length === 0) {
+      issues.push(`${agent.id} handoff must declare producedArtifacts`);
+    }
+
+    agent.outputs.forEach((outputPath) => {
+      if (!agent.allowedPaths.some((allowedPath) => pathMatches(allowedPath, outputPath))) {
+        issues.push(`${agent.id} output ${outputPath} is not covered by allowedPaths`);
+      }
+    });
+  });
+
+  blueprint.phases.forEach((phase) => {
+    if (!blueprint.agents.some((agent) => agent.role === 'phase' && agent.ownerPhaseId === phase.id)) {
+      issues.push(`phase ${phase.id} is missing a phase agent`);
+    }
+  });
+
+  blueprint.nodes.forEach((nodeItem) => {
+    if (!blueprint.agents.some((agent) => agent.role === 'node' && agent.nodeId === nodeItem.id)) {
+      issues.push(`workflow node ${nodeItem.id} is missing a node agent`);
+    }
+  });
+
+  blueprint.providerContracts.forEach((contractItem) => {
+    if (!blueprint.agents.some((agent) => agent.role === 'adapter' && agent.adapterSlot === contractItem.adapterSlot)) {
+      issues.push(`adapter slot ${contractItem.adapterSlot} is missing an adapter agent`);
+    }
+  });
+
+  const availableArtifacts = uniqueStrings([
+    ...blueprint.artifacts.map((artifactItem) => artifactItem.path),
+    ...blueprint.nodes.flatMap((nodeItem) => nodeItem.outputs),
+    ...blueprint.providerContracts.flatMap((contractItem) => contractItem.outputArtifacts),
+  ]);
+
+  blueprint.agents.forEach((agent) => {
+    agent.inputs.forEach((inputPath) => {
+      if (!availableArtifacts.some((artifactPath) => pathsCompatible(artifactPath, inputPath))) {
+        issues.push(`${agent.id} input ${inputPath} is not produced by an upstream artifact or adapter contract`);
+      }
+    });
+  });
+}
+
+function createDefaultAgents(
+  phases: PhaseDefinition[],
+  nodes: WorkflowNode[],
+  artifacts: ArtifactPlan[],
+  providerContracts: ProviderContract[]
+): AgentSpec[] {
+  return [
+    ...phases.map((phase) => createPhaseAgent(phase, phases)),
+    ...nodes.map((nodeItem) => createNodeAgent(nodeItem, nodes, artifacts)),
+    ...providerContracts.map(createAdapterAgent),
+  ];
+}
+
+function createPhaseAgent(
+  phase: PhaseDefinition,
+  phases: PhaseDefinition[]
+): AgentSpec {
+  const dependencyArtifacts = phase.dependsOn.flatMap((phaseId) => {
+    const dependency = phases.find((candidate) => candidate.id === phaseId);
+
+    return dependency ? dependency.requiredArtifacts : [];
+  });
+
+  return {
+    id: `${phase.id}-agent`,
+    label: `${phase.title} Agent`,
+    role: 'phase',
+    purpose: `Owns the phase contract, execution boundary, required artifacts, and handoff for ${phase.id}.`,
+    ownerPhaseId: phase.id,
+    inputs: dependencyArtifacts,
+    outputs: phase.requiredArtifacts,
+    allowedPaths: allowedPathsForArtifacts(phase.requiredArtifacts),
+    requiredArtifacts: phase.requiredArtifacts,
+    qualityGates: [
+      `All required artifacts for ${phase.id} exist before handoff.`,
+      'Phase output remains inside the current execution boundary.',
+      'No future phase deliverables are mixed into this phase.',
+    ],
+    handoffArtifacts: phase.requiredArtifacts,
+    forbiddenActions: [
+      'Do not call external providers from a phase agent.',
+      'Do not write secrets, cookies, credentials, or private local paths.',
+      'Do not publish, tag, archive, or make release decisions.',
+    ],
+    humanApprovalGates: [
+      'Real provider call approval.',
+      'Public release, commercial use, tag, or archive decision.',
+    ],
+    handoff: {
+      producedArtifacts: phase.requiredArtifacts,
+      nextAgentIds: nextPhaseAgentIds(phase, phases),
+      notes: ['Update plan/handoff.md after the phase is objectively complete.'],
+    },
+  };
+}
+
+function createNodeAgent(
+  nodeItem: WorkflowNode,
+  nodes: WorkflowNode[],
+  artifacts: ArtifactPlan[]
+): AgentSpec {
+  const upstreamArtifacts = nodeItem.dependsOn.flatMap((nodeId) => {
+    const dependency = nodes.find((candidate) => candidate.id === nodeId);
+
+    return dependency ? dependency.outputs : [];
+  });
+
+  return {
+    id: `${nodeItem.id}-agent`,
+    label: `${nodeItem.label} Agent`,
+    role: 'node',
+    purpose: `Produces the ${nodeItem.label} workflow node outputs while preserving input/output contracts.`,
+    ownerPhaseId: ownerPhaseForNode(nodeItem, artifacts),
+    nodeId: nodeItem.id,
+    inputs: upstreamArtifacts,
+    outputs: nodeItem.outputs,
+    allowedPaths: allowedPathsForArtifacts(nodeItem.outputs),
+    requiredArtifacts: nodeItem.requiredArtifacts,
+    qualityGates: [
+      `Outputs match the workflow node contract for ${nodeItem.id}.`,
+      'Required artifacts are ready for the next node before handoff.',
+      'Node changes do not break downstream inputs.',
+    ],
+    handoffArtifacts: nodeItem.outputs,
+    forbiddenActions: [
+      'Do not mutate upstream source artifacts outside the active phase contract.',
+      'Do not write secrets, cookies, credentials, or private local paths.',
+    ],
+    humanApprovalGates: nodeItem.type === 'generation' ? ['Real provider calls.'] : [],
+    handoff: {
+      producedArtifacts: nodeItem.outputs,
+      nextAgentIds: nextNodeAgentIds(nodeItem, nodes),
+      notes: ['Record any continuity, timing, or missing-input risk before handoff.'],
+    },
+  };
+}
+
+function createAdapterAgent(contractItem: ProviderContract): AgentSpec {
+  return {
+    id: `${contractItem.adapterSlot}-agent`,
+    label: `${titleCase(contractItem.adapterSlot)} Agent`,
+    role: 'adapter',
+    purpose: `Translates validated provider-neutral ${contractItem.kind} jobs for the ${contractItem.adapterSlot} slot after human approval.`,
+    adapterSlot: contractItem.adapterSlot,
+    inputs: contractItem.inputArtifacts,
+    outputs: contractItem.outputArtifacts,
+    allowedPaths: contractItem.outputArtifacts,
+    requiredArtifacts: contractItem.outputArtifacts,
+    qualityGates: [
+      'Generation jobs validate against the provider contract before execution.',
+      'Provider remains unassigned until a human chooses the concrete adapter.',
+      'Run reports record provider, model, cost, duration, and output checks outside source specs.',
+    ],
+    handoffArtifacts: contractItem.outputArtifacts,
+    forbiddenActions: [
+      'Do not store API keys, tokens, cookies, bearer headers, passwords, or account configuration in the repository.',
+      'Do not mutate story, storyboard, audio timeline, prompt, or job source files during provider execution.',
+      'Do not upload private input assets before explicit human approval.',
+    ],
+    humanApprovalGates: [
+      'Provider and model family.',
+      'Authentication mechanism.',
+      'Estimated cost or quota impact.',
+      'Exact input artifacts to upload.',
+      'Output retention and usage rights.',
+    ],
+    handoff: {
+      producedArtifacts: contractItem.outputArtifacts,
+      nextAgentIds: [],
+      notes: ['Write a run report next to generated outputs when a real adapter is used.'],
+    },
+  };
 }
 
 function normalizeInput(input: AnimeDramaWorkflowInput): AnimeDramaTarget {
@@ -307,6 +530,7 @@ function replacementOptions(type: WorkflowNode['type']): string[] {
 function createDefaultArtifacts(): ArtifactPlan[] {
   return [
     artifact('anime/bible/concept.md', 'markdown', 'Series promise, audience, platform, aspect ratio, duration, and non-goals.', 'phase-0-concept-promise'),
+    artifact('anime/bible/production-constraints.md', 'markdown', 'Model-call depth, content boundaries, release constraints, and provider approval gates.', 'phase-0-concept-promise'),
     artifact('anime/bible/characters.md', 'markdown', 'Character anchors for appearance, behavior, expression, and voice.', 'phase-1-cast-style-bible'),
     artifact('anime/bible/style-bible.md', 'markdown', 'Visual style, camera language, palette, lighting, and forbidden drift.', 'phase-1-cast-style-bible'),
     artifact('anime/scripts/episode-001-beats.md', 'markdown', 'Hook, beat map, escalation, payoff, and ending pull.', 'phase-2-episode-beat-sheet'),
@@ -490,6 +714,81 @@ function createGenerationJobs(
       },
     },
   ];
+}
+
+function allowedPathsForArtifacts(paths: string[]): string[] {
+  return uniqueStrings(
+    paths.map((pathValue) => {
+      const normalized = normalizePathReference(pathValue);
+      if (normalized.endsWith('/**')) {
+        return normalized;
+      }
+      if (!normalized.includes('/')) {
+        return normalized;
+      }
+
+      return normalized;
+    })
+  );
+}
+
+function nextPhaseAgentIds(phase: PhaseDefinition, phases: PhaseDefinition[]): string[] {
+  return phases
+    .filter((candidate) => candidate.dependsOn.includes(phase.id))
+    .map((candidate) => `${candidate.id}-agent`);
+}
+
+function nextNodeAgentIds(nodeItem: WorkflowNode, nodes: WorkflowNode[]): string[] {
+  return nodes
+    .filter((candidate) => candidate.dependsOn.includes(nodeItem.id))
+    .map((candidate) => `${candidate.id}-agent`);
+}
+
+function ownerPhaseForNode(
+  nodeItem: WorkflowNode,
+  artifacts: ArtifactPlan[]
+): string | undefined {
+  const artifactMatch = artifacts.find((artifactItem) =>
+    nodeItem.outputs.includes(artifactItem.path)
+  );
+
+  return artifactMatch?.producedBy;
+}
+
+function pathMatches(pattern: string, targetPath: string): boolean {
+  const normalizedPattern = normalizePathReference(pattern);
+  const normalizedTarget = normalizePathReference(targetPath);
+
+  if (normalizedPattern === normalizedTarget) {
+    return true;
+  }
+  if (normalizedPattern.endsWith('/**')) {
+    const prefix = normalizedPattern.slice(0, -3);
+
+    return normalizedTarget === prefix || normalizedTarget.startsWith(`${prefix}/`);
+  }
+
+  return false;
+}
+
+function pathsCompatible(availablePath: string, requestedPath: string): boolean {
+  return pathMatches(availablePath, requestedPath) || pathMatches(requestedPath, availablePath);
+}
+
+function normalizePathReference(pathValue: string): string {
+  return pathValue.split('#')[0];
+}
+
+function titleCase(value: string): string {
+  return value
+    .split(/[_-]/g)
+    .filter((part) => part.length > 0)
+    .map((part) => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
 }
 
 function defaultAspectRatio(platform: TargetPlatform): AspectRatio {

@@ -52,6 +52,19 @@ A future provider-specific adapter should be a replaceable edge node, not part o
 5. Write a small run report with provider name, model/version, duration, cost estimate, and output checks.
 6. Never mutate story, storyboard, audio timeline, or prompt source files during a provider call.
 
+## Adapter Agent Rules
+
+An `AdapterAgent` is the independent-agent form of a provider adapter contract. It is allowed to translate a validated neutral job into a concrete provider call only after human approval. It must declare:
+
+- `role: adapter` and the stable `adapterSlot` it serves.
+- `inputs`: validated job specs plus the neutral artifacts it may read.
+- `outputs`: generated media or run reports, usually under `anime/assets/**` or `anime/final/**`.
+- `qualityGates`: job validation, output existence, run report, and sync/format checks.
+- `forbiddenActions`: writing credentials, mutating source story artifacts, uploading private assets without approval, or changing `provider: unassigned` inside source job specs.
+- `humanApprovalGates`: provider/model, authentication method, cost, upload scope, output retention, reuse rights, and commercial-use boundary.
+
+Adapter-specific request schemas belong inside the adapter implementation or run report. They must not be smuggled into provider-neutral `GenerationJobSpec.input` fields.
+
 ## Human Confirmation Gate
 
 Before any real call, ask the user to confirm:

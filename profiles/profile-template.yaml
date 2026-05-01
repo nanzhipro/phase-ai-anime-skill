@@ -26,6 +26,20 @@ defaults:
     - id: <phase-id>
       purpose: <该 phase 的作用>
       required: true
+  agent_catalog:
+    phase_agents:
+      - id: <phase-id>-agent
+        owner_phase_id: <phase-id>
+        purpose: <该 phase agent 负责的合同、边界和 handoff>
+    node_agents:
+      - id: <workflow-node-id>-agent
+        node_id: <workflow-node-id>
+        owner_phase_id: <phase-id>
+        purpose: <该创作节点负责的输入输出与质量门禁>
+    adapter_agents:
+      - id: <adapter-slot>-agent
+        adapter_slot: <adapter-slot>
+        purpose: <该 adapter agent 在人工确认后如何消费 provider-neutral jobs>
 quality_focus:
   - <finalize/review 时要重点检查什么>
 common_md_must_cover:

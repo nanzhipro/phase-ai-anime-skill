@@ -51,6 +51,7 @@ ruby scripts/planctl complete <phase-id> --summary "<summary>" --next-focus "<ne
 
 - 剧情、台词、分镜、prompt、音频和合成不得混成一个 phase。
 - 每个镜头必须能追溯到 beat、角色、动作、音频 cue 和 prompt 入口。
+- 每个 active phase 和创作节点若存在 AgentSpec / agent map，必须按对应 Agent 的 inputs、outputs、quality gates 和 handoff artifacts 执行。
 - 音画同步必须落在 timeline 文件里，不得只写在自然语言说明中。
 - generation job specs 必须 provider-neutral；具体 adapter 是可替换节点。
 - 角色一致性和风格一致性优先于单镜头“惊艳”。
@@ -65,3 +66,10 @@ ruby scripts/planctl finalize
 ```
 
 拿到 dashboard 后，必须人工化解读风险与下一步，不得直接替用户上线、发版、打 tag、归档 `plan/` 或发布视频。
+
+## 七、独立 Agent 裁剪规则
+
+- PhaseAgent 负责 phase 目标、execution 边界、allowed paths、完成判定和 handoff，不直接做真实 provider 调用。
+- NodeAgent 负责单个创作节点的输入输出、质量门禁和下游交接；插入或删除节点前必须检查 AgentSpec 是否同步。
+- AdapterAgent 只消费已验证的 provider-neutral job specs；真实调用前必须确认 provider、鉴权、成本、素材边界和输出用途。
+- 一个 phase 可以包含多个 NodeAgent；不要把 phase 与 workflow node 简单等同。

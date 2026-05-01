@@ -4,6 +4,7 @@ import {
   createAdapterRegistry,
   createErrorResponse,
   createSkillResponse,
+  AgentSpec,
   GenerationJobSpec,
   insertWorkflowNode,
   removeWorkflowNode,
@@ -49,6 +50,9 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.target.modelCallDepth).toBe('offline-spec-only');
     expect(blueprint.phases).toHaveLength(9);
     expect(blueprint.nodes.map((node) => node.id)).toContain('audio_timeline');
+    expect(blueprint.agents.map((agent) => agent.role)).toEqual(
+      expect.arrayContaining(['phase', 'node', 'adapter'])
+    );
     expect(blueprint.artifacts.map((artifact) => artifact.path)).toContain(
       'anime/jobs/episode-001-generation-jobs.json'
     );
@@ -69,6 +73,47 @@ describe('buildAnimeDramaWorkflow', () => {
   });
 });
 
+describe('workflow agent contracts', () => {
+  it('creates phase, node, and adapter agents for the default workflow', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '一台复古录音机每天重播主角还没说出口的话。' });
+
+    expect(blueprint.agents).toHaveLength(
+      blueprint.phases.length + blueprint.nodes.length + blueprint.providerContracts.length
+    );
+    expect(blueprint.agents).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ role: 'phase', ownerPhaseId: 'phase-4-shot-storyboard' }),
+        expect.objectContaining({ role: 'node', nodeId: 'shot_storyboard' }),
+        expect.objectContaining({ role: 'adapter', adapterSlot: 'image_to_video_adapter' }),
+      ])
+    );
+  });
+
+  it('reports a missing phase agent', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '便利店收银机突然开始打印未来的悔意。' });
+    const invalidBlueprint = {
+      ...blueprint,
+      agents: blueprint.agents.filter((agent) => agent.id !== 'phase-0-concept-promise-agent'),
+    };
+
+    expect(validateAnimeDramaBlueprint(invalidBlueprint)).toContain(
+      'phase phase-0-concept-promise is missing a phase agent'
+    );
+  });
+
+  it('reports a missing node agent', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '少女发现自己的影子已经替她拍完了预告片。' });
+    const invalidBlueprint = {
+      ...blueprint,
+      agents: blueprint.agents.filter((agent) => agent.id !== 'audio_timeline-agent'),
+    };
+
+    expect(validateAnimeDramaBlueprint(invalidBlueprint)).toContain(
+      'workflow node audio_timeline is missing a node agent'
+    );
+  });
+});
+
 describe('workflow node mutations', () => {
   it('can insert an optional workflow node after an existing node', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '一只会剪辑的幽灵想让自己的遗作爆火。' });
@@ -84,11 +129,35 @@ describe('workflow node mutations', () => {
       optional: true,
       deletable: true,
     };
+    const agent = createNodeAgentForTest(node);
 
-    const result = insertWorkflowNode(blueprint, node, 'audio_timeline');
+    const result = insertWorkflowNode(blueprint, node, 'audio_timeline', agent);
 
     expect(result.success).toBe(true);
     expect(result.workflow?.nodes.map((item) => item.id)).toContain('platform_caption_review');
+    expect(result.workflow?.agents.map((item) => item.id)).toContain('platform_caption_review-agent');
+    expect(validateAnimeDramaBlueprint(result.workflow!)).toEqual([]);
+  });
+
+  it('requires a node agent when inserting a workflow node', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '旧投影仪开始剪掉主角所有说谎的镜头。' });
+    const node: WorkflowNode = {
+      id: 'policy_caption_review',
+      label: 'Policy Caption Review',
+      type: 'review',
+      inputs: ['anime/audio/episode-001-timeline.yaml'],
+      outputs: ['anime/review/policy-caption-review.md'],
+      requiredArtifacts: ['anime/review/policy-caption-review.md'],
+      replaceableBy: ['human-review'],
+      dependsOn: ['audio_timeline'],
+      optional: true,
+      deletable: true,
+    };
+
+    const result = insertWorkflowNode(blueprint, node, 'audio_timeline');
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Node agent is required for inserted node: policy_caption_review');
   });
 
   it('prevents removing a node used by downstream nodes', () => {
@@ -180,3 +249,27 @@ describe('animeSkillHandler', () => {
     );
   });
 });
+
+function createNodeAgentForTest(node: WorkflowNode): AgentSpec {
+  return {
+    id: `${node.id}-agent`,
+    label: `${node.label} Agent`,
+    role: 'node',
+    purpose: `Test agent for ${node.id}.`,
+    ownerPhaseId: 'phase-6-audio-timeline',
+    nodeId: node.id,
+    inputs: node.inputs,
+    outputs: node.outputs,
+    allowedPaths: node.outputs,
+    requiredArtifacts: node.requiredArtifacts,
+    qualityGates: ['Inserted node output is present before handoff.'],
+    handoffArtifacts: node.outputs,
+    forbiddenActions: ['Do not write secrets or private paths.'],
+    humanApprovalGates: [],
+    handoff: {
+      producedArtifacts: node.outputs,
+      nextAgentIds: ['generation_job_specs-agent'],
+      notes: ['Inserted during test.'],
+    },
+  };
+}
