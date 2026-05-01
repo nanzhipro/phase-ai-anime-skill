@@ -1,0 +1,11 @@
+episode: episode-001
+prompts:
+  - shot_id: shot-001-hook
+    prompt: cat-eared anime detective in yellow raincoat, blue scarf, freezer aisle reflection, midnight convenience store, rain neon, vertical close-up, expressive startled eyes
+    negative_prompt: realistic human photo, logo, watermark, extra ears, unreadable face
+  - shot_id: shot-002-choice
+    prompt: cat-eared detective choosing to walk away from exit toward glowing freezer aisle, neon rain reflections, vertical medium shot, cinematic anime line art
+    negative_prompt: crowded background, brand logos, distorted hands, inconsistent outfit
+  - shot_id: shot-003-twist
+    prompt: tiny earbud on freezer shelf reflecting detective face, waveform glow, suspense anime extreme close-up, clean line art
+    negative_prompt: horror gore, unreadable object, photorealism, broken text

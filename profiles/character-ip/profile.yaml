@@ -1,0 +1,59 @@
+version: 1
+id: character-ip
+label: Character IP Loop
+family: character-ip
+engine: character-loop
+description: >-
+  面向可重复角色 IP 短内容，强调角色锚点、固定互动结构、口头禅和批量化生成。
+selection_hints:
+  suitable_for:
+    - 想打造固定角色账号或系列短内容
+    - 每集结构相似但梗、情境或反应变化的项目
+  avoid_when:
+    - 需要一次性严肃长剧情样片
+defaults:
+  production_artifacts:
+    required:
+      - path: anime/bible/character-ip-bible.md
+        purpose: 角色外观、声口、行为、口头禅和禁区
+      - path: anime/scripts/repeatable-bit-engine.md
+        purpose: 可重复单集结构
+      - path: anime/jobs/batch-generation-jobs.json
+        purpose: 批量生成任务规格
+  phase_catalog:
+    - id: phase-0-concept-promise
+      purpose: 锁定角色 IP 定位、受众和平台
+      required: true
+    - id: phase-1-character-ip-bible
+      purpose: 建立角色外观、声口、表情和行为锚点
+      required: true
+    - id: phase-2-repeatable-bit-engine
+      purpose: 设计可反复使用的单集梗结构
+      required: true
+    - id: phase-3-dialogue-voice-script
+      purpose: 生成角色口头禅、反应句和字幕口径
+      required: true
+    - id: phase-4-shot-storyboard
+      purpose: 设计可复用镜头模板
+      required: true
+    - id: phase-5-voice-loop-system
+      purpose: 配音、音效和固定节奏模板
+      required: true
+    - id: phase-6-generation-job-specs
+      purpose: 批量化 image/video/audio job specs
+      required: true
+    - id: phase-7-assembly-qc
+      purpose: 批量合成清单和角色一致性质检
+      required: true
+quality_focus:
+  - 角色是否一眼可识别
+  - 每集是否有可重复但不机械的结构
+  - 口头禅和声口是否稳定
+common_md_must_cover:
+  - 角色外观和声音锚点
+  - 可重复结构
+  - 禁止破坏 IP 识别度的变化
+recommended_overlays:
+  - character-consistency
+  - short-form-retention
+  - provider-jobs

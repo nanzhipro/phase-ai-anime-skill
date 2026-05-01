@@ -1,12 +1,34 @@
-export interface AnimeInfo {
-  id: string;
-  title: string;
-  genre: string[];
-  episodes: number;
-  status: 'ongoing' | 'completed' | 'upcoming';
-  rating?: number;
-  description?: string;
-}
+export type TargetPlatform =
+  | 'vertical-short'
+  | 'episodic-cinematic'
+  | 'webtoon-motion'
+  | 'character-ip'
+  | 'custom';
+
+export type AspectRatio = '9:16' | '16:9' | '1:1' | '4:5' | 'custom';
+
+export type ModelCallDepth =
+  | 'offline-spec-only'
+  | 'local-command-adapter'
+  | 'cloud-api-adapter';
+
+export type WorkflowNodeType =
+  | 'creative'
+  | 'storyboard'
+  | 'prompting'
+  | 'audio'
+  | 'generation'
+  | 'assembly'
+  | 'review';
+
+export type ProviderKind =
+  | 'image'
+  | 'video'
+  | 'tts'
+  | 'sfx'
+  | 'music'
+  | 'assembly'
+  | 'review';
 
 export interface SkillRequest {
   query: string;
@@ -22,3 +44,145 @@ export interface SkillResponse<T = unknown> {
 export type SkillHandler<TRequest = SkillRequest, TResponse = unknown> = (
   request: TRequest
 ) => Promise<SkillResponse<TResponse>>;
+
+export interface AnimeDramaWorkflowInput {
+  title?: string;
+  premise: string;
+  targetPlatform?: TargetPlatform;
+  aspectRatio?: AspectRatio;
+  episodeDurationSeconds?: number;
+  episodeCount?: number;
+  language?: string;
+  styleDirection?: string;
+  modelCallDepth?: ModelCallDepth;
+  overlays?: string[];
+}
+
+export interface AnimeDramaTarget {
+  platform: TargetPlatform;
+  aspectRatio: AspectRatio;
+  episodeDurationSeconds: number;
+  episodeCount: number;
+  language: string;
+  modelCallDepth: ModelCallDepth;
+}
+
+export interface PhaseDefinition {
+  id: string;
+  title: string;
+  purpose: string;
+  requiredArtifacts: string[];
+  dependsOn: string[];
+}
+
+export interface WorkflowNode {
+  id: string;
+  label: string;
+  type: WorkflowNodeType;
+  inputs: string[];
+  outputs: string[];
+  requiredArtifacts: string[];
+  replaceableBy: string[];
+  dependsOn: string[];
+  optional: boolean;
+  deletable: boolean;
+}
+
+export interface ArtifactPlan {
+  path: string;
+  format: 'markdown' | 'yaml' | 'json' | 'directory';
+  purpose: string;
+  producedBy: string;
+}
+
+export interface TimelineCue {
+  id: string;
+  kind: 'dialogue' | 'sfx' | 'music' | 'subtitle' | 'silence';
+  startSeconds: number;
+  endSeconds: number;
+  text?: string;
+  speaker?: string;
+  emotion?: string;
+}
+
+export interface ShotTimeline {
+  shotId: string;
+  startSeconds: number;
+  endSeconds: number;
+  visualIntent: string;
+  camera: string;
+  action: string;
+  promptRefs: string[];
+  audioCues: TimelineCue[];
+}
+
+export interface ProviderContract {
+  kind: ProviderKind;
+  adapterSlot: string;
+  inputArtifacts: string[];
+  outputArtifacts: string[];
+  requiredFields: string[];
+  forbiddenFields: string[];
+}
+
+export interface AdapterRegistryEntry extends ProviderContract {
+  status: 'contract-only' | 'available';
+}
+
+export interface AdapterValidationIssue {
+  jobId: string;
+  code:
+    | 'missing_contract'
+    | 'provider_bound'
+    | 'kind_mismatch'
+    | 'adapter_slot_mismatch'
+    | 'missing_required_field'
+    | 'forbidden_field'
+    | 'private_path';
+  message: string;
+}
+
+export interface AdapterValidationResult {
+  valid: boolean;
+  issues: AdapterValidationIssue[];
+}
+
+export interface GenerationJobSpec {
+  jobId: string;
+  kind: ProviderKind;
+  provider: 'unassigned';
+  adapterSlot: string;
+  input: Record<string, string | number | string[]>;
+  output: {
+    expectedPath: string;
+    format: string;
+  };
+  safety: {
+    storesSecrets: false;
+    requiresHumanApproval: boolean;
+  };
+}
+
+export interface WorkflowMutationResult {
+  success: boolean;
+  workflow?: AnimeDramaBlueprint;
+  error?: string;
+}
+
+export interface AnimeDramaBlueprint {
+  kind: 'phase-ai-anime-blueprint';
+  version: 1;
+  title: string;
+  premise: string;
+  target: AnimeDramaTarget;
+  styleDirection: string;
+  overlays: string[];
+  phases: PhaseDefinition[];
+  nodes: WorkflowNode[];
+  artifacts: ArtifactPlan[];
+  sampleTimeline: ShotTimeline[];
+  providerContracts: ProviderContract[];
+  generationJobs: GenerationJobSpec[];
+  qualityGates: string[];
+  nextSteps: string[];
+}

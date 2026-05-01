@@ -1,0 +1,66 @@
+{
+  "episode": "episode-001",
+  "jobs": [
+    {
+      "jobId": "job-image-shot-001",
+      "kind": "image",
+      "provider": "unassigned",
+      "adapterSlot": "image_generation_adapter",
+      "input": {
+        "shot_id": "shot-001-hook",
+        "promptRef": "anime/prompts/episode-001-image-prompts.yaml#shot-001-hook",
+        "aspectRatio": "9:16",
+        "styleRef": "anime/bible/concept.md#visual-anchors"
+      },
+      "output": {
+        "expectedPath": "anime/assets/images/shot-001-keyframe.png",
+        "format": "png"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": false
+      }
+    },
+    {
+      "jobId": "job-video-shot-001",
+      "kind": "video",
+      "provider": "unassigned",
+      "adapterSlot": "image_to_video_adapter",
+      "input": {
+        "shot_id": "shot-001-hook",
+        "promptRef": "anime/prompts/episode-001-video-prompts.yaml#shot-001-hook",
+        "firstFrame": "anime/assets/images/shot-001-keyframe.png",
+        "durationSeconds": 3
+      },
+      "output": {
+        "expectedPath": "anime/assets/video/shot-001.mp4",
+        "format": "mp4"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    },
+    {
+      "jobId": "job-tts-shot-001",
+      "kind": "tts",
+      "provider": "unassigned",
+      "adapterSlot": "tts_adapter",
+      "input": {
+        "shot_id": "shot-001-hook",
+        "speaker": "earbud_voice",
+        "text": "你终于听见我了。",
+        "emotion": "intimate whisper",
+        "language": "zh-CN"
+      },
+      "output": {
+        "expectedPath": "anime/assets/audio/voice/shot-001-earbud.wav",
+        "format": "wav"
+      },
+      "safety": {
+        "credentialsStored": false,
+        "requiresHumanApproval": true
+      }
+    }
+  ]
+}

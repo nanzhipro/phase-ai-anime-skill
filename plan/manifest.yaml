@@ -1,0 +1,164 @@
+version: 1
+kind: phase-ai-anime-skill-rewrite-plan-manifest
+project: phase-ai-anime-skill
+entrypoints:
+  overview: README.md
+  common: plan/common.md
+  workflow: plan/workflow.md
+  handoff: plan/handoff.md
+workflow_profile:
+  profile: vertical-short
+  engine: hook-driven
+  overlays:
+    - character-consistency
+    - audio-lipsync
+    - provider-jobs
+project_profile:
+  form: skill-mvp
+  delivery_tier: mvp-framework
+  delivery_paths:
+    - SKILL.md
+    - README.md
+    - README_en.md
+    - src/**/*.ts
+repo_policy:
+  mode: standalone
+  protected_branches:
+    - main
+    - master
+execution_rule:
+  description: >-
+    This source repository is being converted from a long-form fiction workflow Skill into an AI anime drama production Skill.
+    Every implementation phase must carry common context, the current phase contract, and the current execution contract.
+  resolver: scripts/planctl.rb
+  state_file: plan/state.yaml
+  handoff_file: plan/handoff.md
+  repo_instructions:
+    - .github/copilot-instructions.md
+    - CLAUDE.md
+    - AGENTS.md
+  continuous_execution:
+    next_command: ruby scripts/planctl.rb advance --strict
+    completion_command: >-
+      ruby scripts/planctl.rb complete <phase-id> --summary "<summary>" --next-focus "<next-focus>" --continue
+  continuation:
+    mode: autonomous
+    stop_only_on:
+      - dependency_missing
+      - missing_context
+      - required_gate_failed
+      - git_conflict
+      - destructive_operation_required
+      - all_phases_completed
+    non_stop_actions:
+      - phase_completed
+      - next_phase_ready
+      - placeholder_contract_promotion
+      - optional_check_failed
+      - no_remote_configured
+  enforcement:
+    dependency_check: true
+    stop_on_missing_context: true
+    require_execution_file: true
+  enforce_allowed_paths: false
+  compression_control:
+    enabled: true
+    max_completion_history: 3
+    resume_read_order:
+      - plan/manifest.yaml
+      - plan/handoff.md
+      - next.phase.required_context
+    rules:
+      - 永远不要一次性加载所有 phase 文档。
+      - 当前窗口只读取 plan/common.md、当前 phase plan 和当前 phase execution。
+      - 每完成一个 phase 后更新 handoff，再进入下一 phase。
+  read_order:
+    - plan/common.md
+    - phase.plan_file
+    - phase.execution_file
+  required_context:
+    - plan/common.md
+phases:
+  - id: phase-0-research-mvp-frame
+    title: Reframe the Skill and ship the core MVP workflow builder
+    plan_file: plan/phases/phase-0-research-mvp-frame.md
+    execution_file: plan/execution/phase-0-research-mvp-frame.md
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-0-research-mvp-frame.md
+      - plan/execution/phase-0-research-mvp-frame.md
+    depends_on: []
+    allowed_paths:
+      - SKILL.md
+      - README.md
+      - README_en.md
+      - CHANGELOG.md
+      - AGENTS.md
+      - CLAUDE.md
+      - .github/**
+      - references/**
+      - profiles/**
+      - src/**
+      - tests/**
+      - scripts/planctl.rb
+      - plan/**
+  - id: phase-1-contract-template-hardening
+    title: Harden generated project contracts and examples
+    plan_file: plan/phases/phase-1-contract-template-hardening.md
+    execution_file: plan/execution/phase-1-contract-template-hardening.md
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-1-contract-template-hardening.md
+      - plan/execution/phase-1-contract-template-hardening.md
+    depends_on:
+      - phase-0-research-mvp-frame
+    allowed_paths:
+      - references/**
+      - profiles/**
+      - SKILL.md
+      - README.md
+      - README_en.md
+      - plan/**
+  - id: phase-2-provider-adapter-contracts
+    title: Specify provider adapter contracts without real API calls
+    plan_file: plan/phases/phase-2-provider-adapter-contracts.md
+    execution_file: plan/execution/phase-2-provider-adapter-contracts.md
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-2-provider-adapter-contracts.md
+      - plan/execution/phase-2-provider-adapter-contracts.md
+    depends_on:
+      - phase-1-contract-template-hardening
+    allowed_paths:
+      - src/**
+      - references/**
+      - tests/**
+      - plan/**
+  - id: phase-3-example-project-smoke-run
+    title: Add a small generated AI anime project example
+    plan_file: plan/phases/phase-3-example-project-smoke-run.md
+    execution_file: plan/execution/phase-3-example-project-smoke-run.md
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-3-example-project-smoke-run.md
+      - plan/execution/phase-3-example-project-smoke-run.md
+    depends_on:
+      - phase-2-provider-adapter-contracts
+    allowed_paths:
+      - examples/**
+      - README.md
+      - README_en.md
+      - tests/**
+      - plan/**
+  - id: phase-4-final-quality-gates
+    title: Final terminology sweep, tests, and release readiness review
+    plan_file: plan/phases/phase-4-final-quality-gates.md
+    execution_file: plan/execution/phase-4-final-quality-gates.md
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-4-final-quality-gates.md
+      - plan/execution/phase-4-final-quality-gates.md
+    depends_on:
+      - phase-3-example-project-smoke-run
+    allowed_paths:
+      - "**/*"

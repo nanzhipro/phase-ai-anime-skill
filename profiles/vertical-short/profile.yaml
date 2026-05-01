@@ -1,0 +1,69 @@
+version: 1
+id: vertical-short
+label: Vertical Short AI Anime Drama
+family: vertical-short
+engine: hook-driven
+description: >-
+  面向 45-90 秒竖屏 AI 漫剧，强调三秒钩子、强反差、快速信息变化和尾部牵引。
+selection_hints:
+  suitable_for:
+    - 抖音、快手、小红书、Reels、Shorts 等竖屏平台
+    - 单集快速验证角色与题材吸引力
+  avoid_when:
+    - 需要长时间铺垫或复杂世界观说明
+input_extensions:
+  required_questions:
+    - id: first-three-seconds
+      prompt: 开头三秒观众会看到什么反差、危险或问题？
+defaults:
+  production_artifacts:
+    required:
+      - path: anime/bible/concept.md
+        purpose: 锁定剧集承诺、受众、画幅和时长
+      - path: anime/storyboard/episode-001-shots.yaml
+        purpose: 镜头级可生成规格
+      - path: anime/audio/episode-001-timeline.yaml
+        purpose: 音画统一时间轴
+      - path: anime/jobs/episode-001-generation-jobs.json
+        purpose: provider-neutral 生成任务
+  phase_catalog:
+    - id: phase-0-concept-promise
+      purpose: 锁定剧集承诺、受众、画幅、时长和非目标
+      required: true
+    - id: phase-1-cast-style-bible
+      purpose: 生成角色、场景和风格一致性锚点
+      required: true
+    - id: phase-2-episode-beat-sheet
+      purpose: 规划三秒钩子、信息变化和尾部牵引
+      required: true
+    - id: phase-3-dialogue-voice-script
+      purpose: 生成可被 TTS 自然读出的台词和字幕口径
+      required: true
+    - id: phase-4-shot-storyboard
+      purpose: 将剧情翻译成镜头卡
+      required: true
+    - id: phase-5-visual-prompt-pack
+      purpose: 生成生图和图生视频 prompts
+      required: true
+    - id: phase-6-audio-timeline
+      purpose: 统一 TTS、SFX、音乐、字幕和动作命中点
+      required: true
+    - id: phase-7-generation-job-specs
+      purpose: 输出 provider-neutral job specs
+      required: true
+    - id: phase-8-assembly-qc
+      purpose: 输出合成清单、质检表和发布包建议
+      required: true
+quality_focus:
+  - 三秒钩子是否清晰
+  - 每 6-10 秒是否有信息或情绪变化
+  - 镜头数量是否匹配目标时长
+common_md_must_cover:
+  - 目标平台与画幅
+  - 单集目标时长
+  - 开头三秒观看契约
+recommended_overlays:
+  - short-form-retention
+  - character-consistency
+  - audio-lipsync
+  - provider-jobs

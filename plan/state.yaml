@@ -1,0 +1,46 @@
+---
+version: 1
+completed_phases:
+- phase-0-research-mvp-frame
+- phase-1-contract-template-hardening
+- phase-2-provider-adapter-contracts
+- phase-3-example-project-smoke-run
+- phase-4-final-quality-gates
+completion_log:
+- phase_id: phase-0-research-mvp-frame
+  completed_at: '2026-05-01T10:49:28Z'
+  summary: Reframed the repository into an AI anime drama Skill MVP with docs, profiles,
+    plan contracts, TypeScript workflow builder, timeline and provider-neutral job
+    specs, plus passing test/build/lint/planctl checks.
+  next_focus: Promote phase-1 contract-template-hardening and harden generated project
+    contracts, examples, and terminology.
+- phase_id: phase-1-contract-template-hardening
+  completed_at: '2026-05-01T10:51:55Z'
+  summary: Hardened AI anime project templates, phase and execution contract guidance,
+    workflow node mutation protocol, and profile overlay examples while preserving
+    offline provider-neutral MVP boundaries.
+  next_focus: Promote phase-2 provider-adapter-contracts and specify adapter interfaces
+    without real API calls.
+- phase_id: phase-2-provider-adapter-contracts
+  completed_at: '2026-05-01T10:54:38Z'
+  summary: Added offline provider adapter contracts, registry and validation helpers,
+    adapter safety tests, and provider adapter reference documentation without real
+    model calls.
+  next_focus: Promote phase-3 example-project-smoke-run and add a minimal generated
+    AI anime project smoke example.
+- phase_id: phase-3-example-project-smoke-run
+  completed_at: '2026-05-01T10:57:05Z'
+  summary: Added a minimal offline AI anime smoke example with plan, storyboard, audio
+    timeline, provider-neutral jobs, assembly manifest, QC notes, README links, and
+    Ruby smoke tests.
+  next_focus: Promote phase-4 final-quality-gates and run terminology, tests, doctor,
+    and release-readiness checks.
+- phase_id: phase-4-final-quality-gates
+  completed_at: '2026-05-01T11:01:14Z'
+  summary: 'Completed final quality gates: terminology sweep, delivery wording cleanup,
+    full Node and Ruby validation, diagnostics cleanup, ignore-state check, and release-readiness
+    review.'
+  next_focus: Finalize execution dashboard for human release, tag, archive, and provider-call
+    decisions.
+updated_at: '2026-05-01T11:01:17Z'
+finalized_at: '2026-05-01T11:01:17Z'

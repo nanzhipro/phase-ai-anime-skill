@@ -1,0 +1,61 @@
+episode: episode-001
+runtime_seconds: 60
+timeline:
+  - shot_id: shot-001-hook
+    start_seconds: 0
+    end_seconds: 3
+    cues:
+      - cue_id: cue-001-sfx-impact
+        kind: sfx
+        start_seconds: 0
+        end_seconds: 0.5
+        text: soft impact hit
+      - cue_id: cue-002-dialogue-whisper
+        kind: dialogue
+        speaker: earbud_voice
+        emotion: intimate whisper
+        start_seconds: 0.5
+        end_seconds: 3
+        text: 你终于听见我了。
+  - shot_id: shot-002-choice
+    start_seconds: 3
+    end_seconds: 36
+    cues:
+      - cue_id: cue-003-music-pulse
+        kind: music
+        start_seconds: 3
+        end_seconds: 36
+        text: low pulsing synth under rain ambience
+      - cue_id: cue-004-dialogue-resolve
+        kind: dialogue
+        speaker: detective
+        emotion: afraid but determined
+        start_seconds: 9
+        end_seconds: 14
+        text: 我讨厌下雨，但更讨厌谜题逃走。
+      - cue_id: cue-005-sfx-rain-door
+        kind: sfx
+        start_seconds: 16
+        end_seconds: 18
+        text: automatic door opens, rain gets louder
+  - shot_id: shot-003-twist
+    start_seconds: 36
+    end_seconds: 60
+    cues:
+      - cue_id: cue-006-silence
+        kind: silence
+        start_seconds: 36
+        end_seconds: 37
+        text: one beat of silence
+      - cue_id: cue-007-dialogue-twist
+        kind: dialogue
+        speaker: earbud_voice
+        emotion: calm reveal
+        start_seconds: 37
+        end_seconds: 55
+        text: 别找耳机了。真正失踪的人，是你。
+      - cue_id: cue-008-sfx-glitch
+        kind: sfx
+        start_seconds: 58
+        end_seconds: 60
+        text: glitch cut to black

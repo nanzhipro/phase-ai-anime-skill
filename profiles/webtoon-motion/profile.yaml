@@ -1,0 +1,62 @@
+version: 1
+id: webtoon-motion
+label: Webtoon Motion
+family: webtoon-motion
+engine: panel-motion
+description: >-
+  面向条漫、漫画分格或静态插画转动态漫剧，强调分格到镜头、字幕、配音和轻运动。
+selection_hints:
+  suitable_for:
+    - 已有漫画分镜或条漫素材
+    - 想用轻运动和配音把静态内容做成短视频
+  avoid_when:
+    - 需要复杂 3D 运镜或写实物理动作
+defaults:
+  production_artifacts:
+    required:
+      - path: anime/bible/panel-style-bible.md
+        purpose: 定义漫画分格和动态化规则
+      - path: anime/storyboard/panel-to-shot-map.yaml
+        purpose: 映射分格到镜头
+      - path: anime/audio/episode-001-timeline.yaml
+        purpose: 配音、字幕和音效节奏
+  phase_catalog:
+    - id: phase-0-concept-promise
+      purpose: 锁定条漫转视频目标和发布平台
+      required: true
+    - id: phase-1-panel-style-bible
+      purpose: 定义分格风格、字体、气泡、转场和动态化边界
+      required: true
+    - id: phase-2-episode-beat-sheet
+      purpose: 把条漫段落整理成视频 beat
+      required: true
+    - id: phase-3-dialogue-voice-script
+      purpose: 台词、旁白、字幕和气泡文字改写
+      required: true
+    - id: phase-4-shot-storyboard
+      purpose: 分格到镜头卡映射
+      required: true
+    - id: phase-5-visual-prompt-pack
+      purpose: 缺失画面补图和轻运动 prompt
+      required: true
+    - id: phase-6-audio-timeline
+      purpose: 配音、音效、字幕和镜头同步
+      required: true
+    - id: phase-7-generation-job-specs
+      purpose: 输出补图、动效、TTS 和合成 job specs
+      required: true
+    - id: phase-8-assembly-qc
+      purpose: 合成清单和漫画阅读节奏质检
+      required: true
+quality_focus:
+  - 分格顺序是否清晰
+  - 字幕和画面文字是否可读
+  - 动态化是否增强阅读而不是干扰
+common_md_must_cover:
+  - 原始漫画素材边界
+  - 字幕和字体规则
+  - 分格到镜头的映射原则
+recommended_overlays:
+  - audio-lipsync
+  - provider-jobs
+  - localization-pack

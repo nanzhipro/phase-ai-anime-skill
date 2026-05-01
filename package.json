@@ -1,9 +1,19 @@
 {
   "name": "phase-ai-anime-skill",
   "version": "1.0.0",
-  "description": "phase-ai-anime-skill",
+  "description": "Provider-neutral phase workflow toolkit for AI anime drama production.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "SKILL.md",
+    "README_en.md",
+    "CHANGELOG.md",
+    "references/",
+    "profiles/",
+    "examples/",
+    "scripts/planctl.rb"
+  ],
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -12,6 +22,7 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint 'src/**/*.ts' --fix",
+    "prepack": "npm run build",
     "clean": "rm -rf dist"
   },
   "keywords": [

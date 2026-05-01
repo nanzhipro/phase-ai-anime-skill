@@ -1,0 +1,41 @@
+version: 1
+kind: phase-ai-anime-example-manifest
+project: rainy-convenience-store
+workflow_profile:
+  profile: vertical-short
+  engine: hook-driven
+  overlays:
+    - short-form-retention
+    - character-consistency
+    - audio-lipsync
+    - provider-jobs
+project_profile:
+  form: vertical-short
+  delivery_tier: animatic-mvp
+  target_runtime_seconds:
+    min: 55
+    max: 65
+  target_shots:
+    min: 3
+    max: 6
+  delivery_paths:
+    - anime/storyboard/**/*.yaml
+    - anime/audio/**/*.yaml
+    - anime/jobs/**/*.json
+    - anime/assembly/**/*.json
+phases:
+  - id: phase-0-concept-promise
+    title: Lock promise and constraints
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-0-concept-promise.md
+      - plan/execution/phase-0-concept-promise.md
+    depends_on: []
+  - id: phase-1-offline-animatic-spec
+    title: Build offline animatic specs
+    required_context:
+      - plan/common.md
+      - plan/phases/phase-1-offline-animatic-spec.md
+      - plan/execution/phase-1-offline-animatic-spec.md
+    depends_on:
+      - phase-0-concept-promise

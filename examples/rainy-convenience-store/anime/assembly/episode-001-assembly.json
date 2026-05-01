@@ -1,0 +1,35 @@
+{
+  "episode": "episode-001",
+  "runtimeSeconds": 60,
+  "aspectRatio": "9:16",
+  "clips": [
+    {
+      "shot_id": "shot-001-hook",
+      "expected_video_job_id": "job-video-shot-001",
+      "expected_audio_job_ids": ["job-tts-shot-001"],
+      "start_seconds": 0,
+      "end_seconds": 3,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-001-hook"
+    },
+    {
+      "shot_id": "shot-002-choice",
+      "expected_video_job_id": "pending-video-shot-002",
+      "expected_audio_job_ids": [],
+      "start_seconds": 3,
+      "end_seconds": 36,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-002-choice"
+    },
+    {
+      "shot_id": "shot-003-twist",
+      "expected_video_job_id": "pending-video-shot-003",
+      "expected_audio_job_ids": [],
+      "start_seconds": 36,
+      "end_seconds": 60,
+      "subtitle_source": "anime/audio/episode-001-timeline.yaml#shot-003-twist"
+    }
+  ],
+  "knownGaps": [
+    "Only shot-001 has sample image/video/tts jobs; remaining shots demonstrate pending job expansion."
+  ],
+  "releaseDecision": "human-required"
+}

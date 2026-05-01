@@ -1,0 +1,154 @@
+version: 1
+merge_spec:
+  supported_ops:
+    - require_phase
+    - ensure_phase_after
+  failure_policy:
+    incompatible_profile: fail
+    unsupported_op: fail
+    missing_profile_target: fail
+    missing_anchor_phase: fail
+    duplicate_inserted_phase_id: reuse_existing_and_move_after_anchor
+overlays:
+  - id: short-form-retention
+    label: Short-form Retention
+    purpose: 强化前三秒钩子、中段信息变化和尾部牵引。
+    compatible_profiles:
+      - vertical-short
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: require_phase
+          targets:
+            vertical-short: phase-2-episode-beat-sheet
+            character-ip: phase-2-repeatable-bit-engine
+            custom: phase-2-episode-beat-sheet
+    artifact_additions:
+      - path: anime/scripts/retention-map.md
+        purpose: 记录 0-3 秒钩子、每 6-10 秒的信息变化和结尾牵引
+    common_md_must_cover:
+      - 每集开头三秒必须出现角色处境、反差或危险中的至少两项
+  - id: character-consistency
+    label: Character Consistency
+    purpose: 强制角色外观、服装、表情、声口和参考图锚点落盘。
+    compatible_profiles:
+      - vertical-short
+      - episodic-cinematic
+      - webtoon-motion
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: require_phase
+          targets:
+            vertical-short: phase-1-cast-style-bible
+            episodic-cinematic: phase-1-cast-style-bible
+            webtoon-motion: phase-1-panel-style-bible
+            character-ip: phase-1-character-ip-bible
+            custom: phase-1-cast-style-bible
+    artifact_additions:
+      - path: anime/bible/character-anchors.yaml
+        purpose: 记录角色外观、服装、表情、动作和 voice anchors
+    common_md_must_cover:
+      - 角色一致性优先于单镜头随机惊艳
+  - id: audio-lipsync
+    label: Audio and Lip Sync
+    purpose: 把 TTS、SFX、音乐、字幕、停顿和动作命中点统一进时间轴。
+    compatible_profiles:
+      - vertical-short
+      - episodic-cinematic
+      - webtoon-motion
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: require_phase
+          targets:
+            vertical-short: phase-6-audio-timeline
+            episodic-cinematic: phase-6-audio-timeline
+            webtoon-motion: phase-6-audio-timeline
+            character-ip: phase-5-voice-loop-system
+            custom: phase-6-audio-timeline
+    artifact_additions:
+      - path: anime/audio/lipsync-notes.yaml
+        purpose: 记录口型、停顿、情绪、字幕和动作命中点
+    common_md_must_cover:
+      - 音画同步必须用时间码表达，不能只写自然语言说明
+  - id: provider-jobs
+    label: Provider Job Specs
+    purpose: 生成不绑定厂商的 image/video/audio job specs，为后续 adapter 留接口。
+    compatible_profiles:
+      - vertical-short
+      - episodic-cinematic
+      - webtoon-motion
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: require_phase
+          targets:
+            vertical-short: phase-7-generation-job-specs
+            episodic-cinematic: phase-7-generation-job-specs
+            webtoon-motion: phase-7-generation-job-specs
+            character-ip: phase-6-generation-job-specs
+            custom: phase-7-generation-job-specs
+    artifact_additions:
+      - path: anime/jobs/provider-map.yaml
+        purpose: 记录 provider adapter、输入输出字段和禁写密钥规则
+    common_md_must_cover:
+      - generation job specs 不得包含真实 API key、token 或 cookie
+  - id: localization-pack
+    label: Localization Pack
+    purpose: 为多语言发布保留字幕、配音、本地化梗和画面文字替换节点。
+    compatible_profiles:
+      - vertical-short
+      - episodic-cinematic
+      - webtoon-motion
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: ensure_phase_after
+          anchor_targets:
+            vertical-short: phase-6-audio-timeline
+            episodic-cinematic: phase-6-audio-timeline
+            webtoon-motion: phase-6-audio-timeline
+            character-ip: phase-5-voice-loop-system
+            custom: phase-6-audio-timeline
+          phase:
+            id: phase-6b-localization-pack
+            purpose: 生成多语言字幕、配音方向和画面文字替换清单
+            required: false
+    artifact_additions:
+      - path: anime/localization/subtitle-map.yaml
+        purpose: 记录源语言、目标语言、字幕换行和屏幕文字替换
+    common_md_must_cover:
+      - 本地化不能破坏角色声口和画面节奏
+  - id: human-review-gate
+    label: Human Review Gate
+    purpose: 在真实生成或发布前加入人工审查节点。
+    compatible_profiles:
+      - vertical-short
+      - episodic-cinematic
+      - webtoon-motion
+      - character-ip
+      - custom
+    phase_merge:
+      operations:
+        - op: ensure_phase_after
+          anchor_targets:
+            vertical-short: phase-8-assembly-qc
+            episodic-cinematic: phase-8-assembly-qc
+            webtoon-motion: phase-8-assembly-qc
+            character-ip: phase-7-assembly-qc
+            custom: phase-8-assembly-qc
+          phase:
+            id: phase-9-human-release-review
+            purpose: 人工复核版权、内容边界、平台适配和发布决策
+            required: false
+    artifact_additions:
+      - path: anime/review/human-release-checklist.md
+        purpose: 发布前人工审查清单
+    common_md_must_cover:
+      - 发布、商用、公开传播和打 tag 必须由人类决定

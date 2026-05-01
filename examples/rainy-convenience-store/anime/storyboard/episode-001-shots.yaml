@@ -1,0 +1,53 @@
+episode: episode-001
+runtime_seconds: 60
+shots:
+  - shot_id: shot-001-hook
+    beat_ref: beat-001
+    start_seconds: 0
+    end_seconds: 3
+    duration_seconds: 3
+    framing: vertical close-up
+    camera: fast push-in from freezer reflection
+    action: The cat-eared detective freezes as the missing earbud whispers from off-screen.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-001-hook
+      - anime/prompts/episode-001-video-prompts.yaml#shot-001-hook
+    audio_cues:
+      - cue-001-sfx-impact
+      - cue-002-dialogue-whisper
+  - shot_id: shot-002-choice
+    beat_ref: beat-002
+    start_seconds: 3
+    end_seconds: 36
+    duration_seconds: 33
+    framing: medium shot to over-the-shoulder
+    camera: slow aisle tracking shot with vertical-safe subject lock
+    action: The detective steps away from the exit and follows the voice toward the freezer aisle.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-002-choice
+      - anime/prompts/episode-001-video-prompts.yaml#shot-002-choice
+    audio_cues:
+      - cue-003-music-pulse
+      - cue-004-dialogue-resolve
+      - cue-005-sfx-rain-door
+  - shot_id: shot-003-twist
+    beat_ref: beat-003
+    start_seconds: 36
+    end_seconds: 60
+    duration_seconds: 24
+    framing: extreme close-up to smash cut black
+    camera: hold on earbud reflection, then hard cut
+    action: The earbud displays a waveform that repeats the detective's own voice.
+    character_refs:
+      - anime/bible/concept.md#visual-anchors
+    prompt_refs:
+      - anime/prompts/episode-001-image-prompts.yaml#shot-003-twist
+      - anime/prompts/episode-001-video-prompts.yaml#shot-003-twist
+    audio_cues:
+      - cue-006-silence
+      - cue-007-dialogue-twist
+      - cue-008-sfx-glitch

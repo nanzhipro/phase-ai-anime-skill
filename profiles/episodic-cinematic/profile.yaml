@@ -1,0 +1,63 @@
+version: 1
+id: episodic-cinematic
+label: Episodic Cinematic AI Anime
+family: episodic-cinematic
+engine: cinematic-emotion
+description: >-
+  面向横屏 pilot、番剧样片或电影感 AI 动漫短片，强调镜头语言、情绪连续和视听节奏。
+selection_hints:
+  suitable_for:
+    - 2-5 分钟 pilot 或概念样片
+    - 需要更强镜头调度、氛围和情绪铺垫的项目
+  avoid_when:
+    - 只追求极速竖屏留存测试
+defaults:
+  production_artifacts:
+    required:
+      - path: anime/bible/cinematic-language.md
+        purpose: 定义镜头、光线、色彩和运动语法
+      - path: anime/storyboard/episode-001-shots.yaml
+        purpose: 镜头级调度表
+      - path: anime/assembly/episode-001-assembly.json
+        purpose: 合成结构
+  phase_catalog:
+    - id: phase-0-concept-promise
+      purpose: 锁定主题、受众、画幅和样片目标
+      required: true
+    - id: phase-1-cast-style-bible
+      purpose: 角色、场景、风格和电影语言 bible
+      required: true
+    - id: phase-2-episode-beat-sheet
+      purpose: 情绪曲线与剧情 beat
+      required: true
+    - id: phase-3-dialogue-voice-script
+      purpose: 台词、旁白、静默和表演方向
+      required: true
+    - id: phase-4-shot-storyboard
+      purpose: 镜头调度、转场和首尾帧意图
+      required: true
+    - id: phase-5-visual-prompt-pack
+      purpose: 图像、视频和风格参考 prompts
+      required: true
+    - id: phase-6-audio-timeline
+      purpose: 音乐、环境音、SFX 和对白节拍
+      required: true
+    - id: phase-7-generation-job-specs
+      purpose: provider-neutral 生成任务规格
+      required: true
+    - id: phase-8-assembly-qc
+      purpose: 合成、节奏和连续性质检
+      required: true
+quality_focus:
+  - 镜头之间的空间与动作连续
+  - 音乐和情绪曲线同步
+  - 角色表演保持一致
+common_md_must_cover:
+  - 目标画幅和镜头语言
+  - 情绪曲线
+  - 角色一致性底线
+recommended_overlays:
+  - character-consistency
+  - audio-lipsync
+  - provider-jobs
+  - human-review-gate

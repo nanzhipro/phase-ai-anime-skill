@@ -1,0 +1,22 @@
+id: <overlay-id>
+label: <human-readable label>
+purpose: <这个 overlay 强化什么生产能力>
+compatible_profiles:
+  - <vertical-short|episodic-cinematic|webtoon-motion|character-ip|custom>
+phase_merge:
+  operations:
+    - op: require_phase
+      targets:
+        <profile-id>: <phase-id>
+    - op: ensure_phase_after
+      anchor_targets:
+        <profile-id>: <anchor-phase-id>
+      phase:
+        id: <new-phase-id>
+        purpose: <新增 phase 目的>
+        required: true
+artifact_additions:
+  - path: <anime/...>
+    purpose: <新增制品目的>
+common_md_must_cover:
+  - <需要写入 common.md 的长期约束>

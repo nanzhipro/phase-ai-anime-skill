@@ -1,0 +1,14 @@
+episode: episode-001
+prompts:
+  - shot_id: shot-001-hook
+    prompt: fast push-in from freezer reflection to detective face, subtle ear twitch, rain reflection flicker, 3 seconds
+    first_frame: anime/assets/images/shot-001-keyframe.png
+    duration_seconds: 3
+  - shot_id: shot-002-choice
+    prompt: slow aisle tracking shot, detective turns from exit to freezer aisle, rain grows louder behind glass door, 33 seconds
+    first_frame: anime/assets/images/shot-002-keyframe.png
+    duration_seconds: 33
+  - shot_id: shot-003-twist
+    prompt: hold on earbud reflection, waveform repeats detective voice, hard glitch cut to black, 24 seconds
+    first_frame: anime/assets/images/shot-003-keyframe.png
+    duration_seconds: 24
