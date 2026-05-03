@@ -50,6 +50,15 @@ ruby scripts/planctl complete <phase-id> --summary "..." --next-focus "..." --co
 ruby scripts/planctl finalize
 ```
 
+如果用户明确说“reset phase”“重置 phase”或“从 0 开始”，先执行：
+
+```bash
+ruby scripts/planctl reset --summary "从 phase-0 重新开始"
+ruby scripts/planctl advance --strict
+```
+
+`reset` 只会清空 phase ledger、handoff 和 finalized 状态，不会删除已经生成的素材文件；这些文件需要在 phase-0 里人工复核、复用或重做。
+
 TypeScript MVP 可以直接生成离线蓝图：
 
 ```ts
@@ -62,6 +71,8 @@ const workflow = buildAnimeDramaWorkflow({
   episodeDurationSeconds: 75,
 });
 ```
+
+如果 `animeSkillHandler` 的 query 以 `reset phase:`、`重置 phase:` 或类似“从 0 开始”指令开头，它会把这次请求标记为从 phase-0 重启，并在 `phaseFlow` / `nextSteps` 中返回对应的 reset 指引。
 
 ## 工作流主链路
 

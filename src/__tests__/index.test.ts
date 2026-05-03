@@ -48,6 +48,13 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.target.platform).toBe('vertical-short');
     expect(blueprint.target.aspectRatio).toBe('9:16');
     expect(blueprint.target.modelCallDepth).toBe('offline-spec-only');
+    expect(blueprint.phaseFlow).toEqual(
+      expect.objectContaining({
+        mode: 'standard',
+        startPhaseId: 'phase-0-concept-promise',
+        resetRequested: false,
+      })
+    );
     expect(blueprint.phases).toHaveLength(9);
     expect(blueprint.nodes.map((node) => node.id)).toContain('audio_timeline');
     expect(blueprint.agents.map((agent) => agent.role)).toEqual(
@@ -70,6 +77,22 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.generationJobs.every((job) => job.provider === 'unassigned')).toBe(true);
     expect(JSON.stringify(blueprint.generationJobs).toLowerCase()).not.toContain('api_key');
     expect(blueprint.sampleTimeline[blueprint.sampleTimeline.length - 1].endSeconds).toBe(180);
+  });
+
+  it('can mark the blueprint to restart from phase-0', () => {
+    const blueprint = buildAnimeDramaWorkflow({
+      premise: '一个忘了自己台词的侦探必须重演昨晚的暴雨现场。',
+      phaseFlowMode: 'reset-phase-0',
+    });
+
+    expect(blueprint.phaseFlow).toEqual(
+      expect.objectContaining({
+        mode: 'reset-phase-0',
+        startPhaseId: 'phase-0-concept-promise',
+        resetRequested: true,
+      })
+    );
+    expect(blueprint.nextSteps[0]).toContain('ruby scripts/planctl reset');
   });
 });
 
@@ -247,6 +270,32 @@ describe('animeSkillHandler', () => {
     expect(result.data?.providerContracts.map((contract) => contract.adapterSlot)).toContain(
       'image_to_video_adapter'
     );
+  });
+
+  it('parses reset phase requests and restarts from phase-0', async () => {
+    const result = await animeSkillHandler({
+      query: 'reset phase: 一个猫耳侦探决定重新调查昨夜的耳机失踪案。',
+      context: {
+        episodeDurationSeconds: 60,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.premise).toBe('一个猫耳侦探决定重新调查昨夜的耳机失踪案。');
+    expect(result.data?.phaseFlow).toEqual(
+      expect.objectContaining({
+        mode: 'reset-phase-0',
+        resetRequested: true,
+      })
+    );
+    expect(result.data?.nextSteps[0]).toContain('ruby scripts/planctl reset');
+  });
+
+  it('returns actionable guidance for a bare reset phase request', async () => {
+    const result = await animeSkillHandler({ query: 'reset phase' });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('ruby scripts/planctl reset');
   });
 });
 

@@ -1,6 +1,6 @@
 ---
 name: phase-ai-anime-skill
-description: "Set up a disk-backed Phase-AI-Anime workflow for AI anime drama and manga-motion video projects. Use when the user wants to create, plan, continue, or revise AI 漫剧, AI 动漫短剧, webtoon-to-video, anime short drama, storyboard-to-video, image/video/TTS generation pipelines, shot lists, dialogue scripts, asset prompts, audio-video timelines, or final assembly manifests across many sessions. Triggers: 'AI 漫剧', 'AI 动漫视频', '动漫短剧', '漫剧工作流', '分镜脚本', '音画同步', '生图到视频', 'AI drama pipeline', 'anime video workflow', 'storyboard to video', 'image to video', 'TTS timeline', 'phase-ai-anime'. Scaffolds plan/manifest.yaml, plan/common.md, phase and execution contracts, planctl, profiles, generation job specs, and synchronized agent instruction files so production state survives context compression across Copilot, Claude Code, and Codex."
+description: "Set up a disk-backed Phase-AI-Anime workflow for AI anime drama and manga-motion video projects. Use when the user wants to create, plan, continue, reset, or revise AI 漫剧, AI 动漫短剧, webtoon-to-video, anime short drama, storyboard-to-video, image/video/TTS generation pipelines, shot lists, dialogue scripts, asset prompts, audio-video timelines, or final assembly manifests across many sessions. Triggers: 'AI 漫剧', 'AI 动漫视频', '动漫短剧', '漫剧工作流', '分镜脚本', '音画同步', '生图到视频', 'AI drama pipeline', 'anime video workflow', 'storyboard to video', 'image to video', 'TTS timeline', 'phase-ai-anime', 'reset phase', '重置 phase', '从 0 开始'. Scaffolds plan/manifest.yaml, plan/common.md, phase and execution contracts, planctl, profiles, generation job specs, and synchronized agent instruction files so production state survives context compression across Copilot, Claude Code, and Codex."
 argument-hint: "(optional) target project path, one-line anime drama premise, target platform, episode duration"
 ---
 
@@ -19,6 +19,7 @@ argument-hint: "(optional) target project path, one-line anime drama premise, ta
 - 想让 AI 生成可交给生图、图生视频、TTS、音乐/SFX、剪辑工具的稳定任务规格。
 - 需要多集连载、角色一致性、风格一致性、音画同步和跨会话续跑。
 - 想保留在流程中插入、删除、替换工作流节点的能力，而不是被固定模板锁死。
+- 用户明确要求把当前 phase 流程“reset phase”或“从 0 开始”，需要清空 ledger 后重新从 phase-0 启动。
 
 **不要用**：
 
@@ -162,6 +163,15 @@ ruby scripts/planctl advance --strict
 ruby scripts/planctl complete <phase-id> --summary "<本轮完成内容>" --next-focus "<下一轮焦点>" --continue
 ruby scripts/planctl finalize
 ```
+
+如果用户明确说“reset phase”“重置 phase”或“从 0 开始”，先执行：
+
+```bash
+ruby scripts/planctl reset --summary "<重置原因>"
+ruby scripts/planctl advance --strict
+```
+
+`reset` 只清 phase ledger、handoff 和 finalized 状态，不自动删除已经生成的分镜、prompt、素材或导出文件；phase-0 需要重新确认哪些制品保留、复用或重做。
 
 `ACTION: promote_placeholder` 不是用户确认点，而是内部待办：先把当前 phase 的 plan/execution 升级成正式合同，再重跑 `advance --strict`。
 

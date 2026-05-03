@@ -6,6 +6,7 @@ import {
   ArtifactPlan,
   AspectRatio,
   GenerationJobSpec,
+  PhaseFlowControl,
   PhaseDefinition,
   ProviderContract,
   ShotTimeline,
@@ -18,11 +19,13 @@ const DEFAULT_DURATION_SECONDS = 75;
 const DEFAULT_EPISODE_COUNT = 1;
 const DEFAULT_LANGUAGE = 'zh-CN';
 const DEFAULT_STYLE = 'anime drama, clean line art, expressive acting, consistent character design';
+const DEFAULT_START_PHASE_ID = 'phase-0-concept-promise';
 
 export function buildAnimeDramaWorkflow(
   input: AnimeDramaWorkflowInput
 ): AnimeDramaBlueprint {
   const normalized = normalizeInput(input);
+  const phaseFlow = createPhaseFlow(input.phaseFlowMode);
   const phases = createDefaultPhases();
   const nodes = createDefaultNodes();
   const artifacts = createDefaultArtifacts();
@@ -37,6 +40,7 @@ export function buildAnimeDramaWorkflow(
     title: input.title?.trim() || deriveTitle(input.premise),
     premise: input.premise.trim(),
     target: normalized,
+    phaseFlow,
     styleDirection: input.styleDirection?.trim() || DEFAULT_STYLE,
     overlays: input.overlays?.length ? input.overlays : ['character-consistency', 'audio-lipsync', 'provider-jobs'],
     phases,
@@ -53,13 +57,41 @@ export function buildAnimeDramaWorkflow(
       'Assembly can be reconstructed from storyboard, timeline, jobs, and expected output paths.',
       'Human approval is required before real provider calls or public release.',
     ],
-    nextSteps: [
-      'Create plan/manifest.yaml from the selected profile and overlays.',
-      'Write phase-0 concept and production constraints before generating assets.',
-      'Upgrade future placeholder contracts only when planctl promotes them.',
-      'Choose provider adapters only after the offline blueprint passes review.',
-    ],
+    nextSteps: createNextSteps(phaseFlow),
   };
+}
+
+function createPhaseFlow(mode: AnimeDramaWorkflowInput['phaseFlowMode']): PhaseFlowControl {
+  const resolvedMode = mode || 'standard';
+  const resetRequested = resolvedMode === 'reset-phase-0';
+
+  return {
+    mode: resolvedMode,
+    startPhaseId: DEFAULT_START_PHASE_ID,
+    resetRequested,
+    commands: resetRequested
+      ? ['ruby scripts/planctl reset', 'ruby scripts/planctl advance --strict']
+      : ['ruby scripts/planctl advance --strict'],
+  };
+}
+
+function createNextSteps(phaseFlow: PhaseFlowControl): string[] {
+  const defaultSteps = [
+    'Create plan/manifest.yaml from the selected profile and overlays.',
+    'Write phase-0 concept and production constraints before generating assets.',
+    'Upgrade future placeholder contracts only when planctl promotes them.',
+    'Choose provider adapters only after the offline blueprint passes review.',
+  ];
+
+  if (!phaseFlow.resetRequested) {
+    return defaultSteps;
+  }
+
+  return [
+    `Run \`ruby scripts/planctl reset\` to clear completed phase state and restart from ${phaseFlow.startPhaseId}.`,
+    'After reset, rerun `ruby scripts/planctl advance --strict` before re-authoring phase-0 artifacts.',
+    ...defaultSteps.slice(1),
+  ];
 }
 
 export function insertWorkflowNode(

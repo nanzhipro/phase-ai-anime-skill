@@ -227,6 +227,45 @@ class PlanCtl
     end
   end
 
+  def reset(summary:)
+    ensure_git_repo!
+    target_phase = manifest_phases.first
+
+    unless target_phase
+      warn '[planctl] Cannot reset because plan/manifest.yaml defines no phases.'
+      exit 2
+    end
+
+    state = load_state(create_if_missing: true)
+    timestamp = Time.now.utc.iso8601
+    reset_history = Array(state['reset_history'])
+    reset_entry = {
+      'reset_at' => timestamp,
+      'reset_to_phase_id' => target_phase['id']
+    }
+    reset_entry['summary'] = summary unless blank?(summary)
+    reset_history << reset_entry
+
+    new_state = state.reject { |key, _value| %w[completed_phases completion_log finalized_at updated_at].include?(key) }
+    new_state['version'] = state['version'] || STATE_SCHEMA_VERSION
+    new_state['completed_phases'] = []
+    new_state['completion_log'] = []
+    new_state['reset_history'] = reset_history
+    new_state['updated_at'] = timestamp
+
+    write_state(new_state)
+    write_handoff_file(new_state)
+    puts "Reset phase flow to #{target_phase['id']} (#{target_phase['title']})."
+    puts 'Cleared completed_phases, completion_log, and finalized_at.'
+    puts "Updated state file: #{state_file_relative}"
+    puts "Updated handoff file: #{handoff_file_relative}"
+    puts 'Existing artifacts remain on disk; reconcile or regenerate them during phase-0.'
+
+    commit_and_push_reset!(target_phase['id'], target_phase['title'], summary)
+
+    puts "NEXT_COMMAND: #{cli_command('advance', '--strict')}"
+  end
+
   # Revert a previously completed phase:
   #   1. Locate its milestone commit via `git log --grep "Phase-Id: <id>"`.
   #   2. Either `git revert` (default, safe) or `git reset --hard` that commit.
@@ -352,6 +391,75 @@ class PlanCtl
     end
 
     push_milestone!(phase_id)
+  end
+
+  def commit_and_push_reset!(phase_id, title, summary)
+    return if git_opt_out?
+    return unless git_work_tree?
+
+    if env_truthy?(SKIP_COMMIT_ENV)
+      puts "[planctl] #{SKIP_COMMIT_ENV} is set; skipping auto-commit and auto-push for reset."
+      return
+    end
+
+    unless run_git('add', '-A')
+      warn '[planctl] git add -A failed; reset ledger not committed. Resolve and commit manually.'
+      return
+    end
+
+    if run_git('diff', '--cached', '--quiet')
+      puts "[planctl] Nothing to commit for reset to #{phase_id}; working tree already clean."
+      return
+    end
+
+    message = build_reset_commit_message(phase_id, title, summary)
+    unless run_git_with_stdin(message, 'commit', '-F', '-')
+      warn "[planctl] git commit failed for reset to #{phase_id}; state was reset but no ledger commit was recorded."
+      warn '[planctl] Resolve the commit manually (hooks, signing, identity) and commit the pending changes.'
+      return
+    end
+    puts "[planctl] Committed reset ledger: #{phase_id}"
+
+    if env_truthy?(SKIP_PUSH_ENV)
+      puts "[planctl] #{SKIP_PUSH_ENV} is set; skipping push. Reset ledger is stored locally only."
+      return
+    end
+
+    push_reset_ledger!(phase_id)
+  end
+
+  def build_reset_commit_message(phase_id, title, summary)
+    subject_base = title && !title.strip.empty? ? title.strip : phase_id
+    subject = "chore(plan): reset workflow to #{phase_id} — #{subject_base}"
+    subject = subject[0, 100] if subject.length > 100
+
+    lines = [subject, '']
+    body = summary && !summary.strip.empty? ? summary.strip : 'Phase flow reset to the first phase via planctl reset.'
+    lines << body
+    lines << ''
+    lines << "Reset-To-Phase: #{phase_id}"
+    lines << "Automated-By: #{automation_identity('reset')}"
+    lines.join("\n") + "\n"
+  end
+
+  def push_reset_ledger!(phase_id)
+    remotes = capture_git('remote').split("\n").reject(&:empty?)
+    if remotes.empty?
+      warn '[planctl] No git remote configured; reset ledger committed locally only, skipping push and continuing.'
+      warn "[planctl] Add a remote and run `git push` manually, or set #{SKIP_PUSH_ENV}=1 to silence this warning."
+      return
+    end
+
+    return if run_git('push')
+
+    target_remote = remotes.include?('origin') ? 'origin' : remotes.first
+    if run_git('push', '-u', target_remote, 'HEAD')
+      puts "[planctl] Pushed reset ledger to #{target_remote} (set upstream)."
+      return
+    end
+
+    warn "[planctl] git push failed for reset to #{phase_id}; reset ledger is committed locally only."
+    warn '[planctl] Resolve the push (auth, protected branch, diverged history) and push manually.'
   end
 
   def handoff(format:, write:)
@@ -2367,6 +2475,7 @@ def usage(command_base)
       #{command_base} advance [--format prompt|json] [--strict]
       #{command_base} status [--format text|json]
       #{command_base} complete <phase-id> [--summary TEXT] [--next-focus TEXT] [--continue]
+      #{command_base} reset [--summary TEXT]
       #{command_base} revert <phase-id> [--mode revert|reset] [--summary TEXT]
       #{command_base} handoff [--format prompt|json] [--write]
       #{command_base} resume [--strict]
@@ -2450,6 +2559,18 @@ when 'complete'
     exit 1
   end
   planctl.complete(phase_id, summary: options[:summary], next_focus: options[:next_focus], continue_run: options[:continue])
+when 'reset'
+  options = { summary: nil }
+  parser = OptionParser.new do |opts|
+    opts.banner = usage_banner
+    opts.on('--summary TEXT', 'Optional reason recorded in reset_history') { |value| options[:summary] = value }
+  end
+  parser.parse!(ARGV)
+  if ARGV.any?
+    warn parser.to_s
+    exit 1
+  end
+  planctl.reset(summary: options[:summary])
 when 'revert'
   options = { mode: 'revert', summary: nil }
   parser = OptionParser.new do |opts|

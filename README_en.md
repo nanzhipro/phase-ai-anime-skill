@@ -50,6 +50,15 @@ ruby scripts/planctl complete <phase-id> --summary "..." --next-focus "..." --co
 ruby scripts/planctl finalize
 ```
 
+If the user explicitly says "reset phase", "restart from phase 0", or equivalent wording, run:
+
+```bash
+ruby scripts/planctl reset --summary "Restart from phase-0"
+ruby scripts/planctl advance --strict
+```
+
+`reset` only clears the phase ledger, handoff snapshot, and finalized state. It does not delete generated assets; review, reuse, or regenerate them during phase-0.
+
 Use the TypeScript MVP directly:
 
 ```ts
@@ -62,6 +71,8 @@ const workflow = buildAnimeDramaWorkflow({
   episodeDurationSeconds: 75,
 });
 ```
+
+If an `animeSkillHandler` query starts with `reset phase:`, `restart from phase 0:`, or equivalent wording, the handler marks the blueprint as a phase-0 restart and returns the reset guidance via `phaseFlow` and `nextSteps`.
 
 ## Main Phase Chain
 

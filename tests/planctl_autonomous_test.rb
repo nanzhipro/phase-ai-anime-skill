@@ -137,6 +137,42 @@ class PlanctlAutonomousTest < Minitest::Test
     refute_includes out, 'Committed finalization ledger'
   end
 
+  def test_reset_clears_phase_state_and_returns_to_phase_0
+    complete_all_phases_with_skip_commit
+    run_planctl({ 'PHASE_CONTRACT_SKIP_PUSH' => '1' }, 'finalize')
+
+    out, err, status = run_planctl(
+      { 'PHASE_CONTRACT_SKIP_PUSH' => '1' },
+      'reset',
+      '--summary', 'Start over from the first phase.'
+    )
+
+    assert status.success?, err
+    assert_includes out, 'Reset phase flow to phase-0 (Scaffold).'
+    assert_includes out, 'NEXT_COMMAND: ruby scripts/planctl advance --strict'
+
+    state = YAML.load_file(File.join(@repo, 'plan/state.yaml'))
+    assert_empty state['completed_phases']
+    assert_empty state['completion_log']
+    assert_nil state['finalized_at']
+    assert_equal 'phase-0', state['reset_history'].last['reset_to_phase_id']
+    assert_equal 'Start over from the first phase.', state['reset_history'].last['summary']
+
+    handoff = File.read(File.join(@repo, 'plan/handoff.md'))
+    assert_includes handoff, 'Completed phases: `none`'
+    refute_includes handoff, 'Finalized at:'
+
+    advance_out, advance_err, advance_status = run_planctl('advance', '--strict')
+    assert advance_status.success?, advance_err
+    assert_includes advance_out, 'ACTION: implement'
+    assert_includes advance_out, 'PHASE: phase-0 Scaffold'
+
+    log = git_output('log', '-n', '1', '--format=%s%n%b')
+    assert_includes log, 'chore(plan): reset workflow to phase-0'
+    assert_includes log, 'Reset-To-Phase: phase-0'
+    assert_includes log, 'Automated-By: scripts/planctl reset'
+  end
+
   def test_source_file_reports_rb_command_when_invoked_directly
     FileUtils.cp(SOURCE_PLANCTL, File.join(@repo, 'scripts', 'planctl.rb'))
 

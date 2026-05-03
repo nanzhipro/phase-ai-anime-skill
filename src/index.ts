@@ -1,6 +1,7 @@
 import {
   AnimeDramaBlueprint,
   AnimeDramaWorkflowInput,
+  PhaseFlowMode,
   SkillHandler,
   SkillRequest,
   SkillResponse,
@@ -31,7 +32,16 @@ export const animeSkillHandler: SkillHandler<
     return createErrorResponse('Query is required');
   }
 
-  const workflowInput = requestToWorkflowInput(request);
+  const phaseFlow = parsePhaseFlowRequest(request.query);
+  const contextPremise = stringValue(request.context?.premise);
+
+  if (phaseFlow.mode === 'reset-phase-0' && !phaseFlow.cleanedQuery && !contextPremise) {
+    return createErrorResponse(
+      'Reset phase requested. Run `ruby scripts/planctl reset` in the project root to restart from phase-0, or provide a new premise to rebuild the blueprint.'
+    );
+  }
+
+  const workflowInput = requestToWorkflowInput(request, phaseFlow, contextPremise);
   const blueprint = buildAnimeDramaWorkflow(workflowInput);
   const issues = validateAnimeDramaBlueprint(blueprint);
 
@@ -42,12 +52,16 @@ export const animeSkillHandler: SkillHandler<
   return createSkillResponse<AnimeDramaBlueprint>(blueprint);
 };
 
-function requestToWorkflowInput(request: SkillRequest): AnimeDramaWorkflowInput {
+function requestToWorkflowInput(
+  request: SkillRequest,
+  phaseFlow: ParsedPhaseFlowRequest,
+  contextPremise?: string
+): AnimeDramaWorkflowInput {
   const context = request.context || {};
 
   return {
     title: stringValue(context.title),
-    premise: request.query,
+    premise: phaseFlow.cleanedQuery || contextPremise || request.query.trim(),
     targetPlatform: enumValue(context.targetPlatform, [
       'vertical-short',
       'episodic-cinematic',
@@ -66,6 +80,39 @@ function requestToWorkflowInput(request: SkillRequest): AnimeDramaWorkflowInput 
       'cloud-api-adapter',
     ]),
     overlays: stringArrayValue(context.overlays),
+    phaseFlowMode: phaseFlow.mode,
+  };
+}
+
+interface ParsedPhaseFlowRequest {
+  mode: PhaseFlowMode;
+  cleanedQuery: string;
+}
+
+const RESET_PHASE_PATTERNS = [
+  /^\s*reset\s+phase\b[\s:：,，-]*/i,
+  /^\s*重置\s*phase\b[\s:：,，-]*/i,
+  /^\s*reset\s*阶段\b[\s:：,，-]*/i,
+  /^\s*重置阶段\b[\s:：,，-]*/i,
+  /^\s*从\s*0\s*开始(?:\s*phase)?[\s:：,，-]*/i,
+  /^\s*从零开始(?:\s*phase)?[\s:：,，-]*/i,
+];
+
+function parsePhaseFlowRequest(query: string): ParsedPhaseFlowRequest {
+  const trimmed = query.trim();
+
+  for (const pattern of RESET_PHASE_PATTERNS) {
+    if (pattern.test(trimmed)) {
+      return {
+        mode: 'reset-phase-0',
+        cleanedQuery: trimmed.replace(pattern, '').trim(),
+      };
+    }
+  }
+
+  return {
+    mode: 'standard',
+    cleanedQuery: trimmed,
   };
 }
 

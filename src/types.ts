@@ -12,6 +12,8 @@ export type ModelCallDepth =
   | 'local-command-adapter'
   | 'cloud-api-adapter';
 
+export type PhaseFlowMode = 'standard' | 'reset-phase-0';
+
 export type WorkflowNodeType =
   | 'creative'
   | 'storyboard'
@@ -58,6 +60,14 @@ export interface AnimeDramaWorkflowInput {
   styleDirection?: string;
   modelCallDepth?: ModelCallDepth;
   overlays?: string[];
+  phaseFlowMode?: PhaseFlowMode;
+}
+
+export interface PhaseFlowControl {
+  mode: PhaseFlowMode;
+  startPhaseId: string;
+  resetRequested: boolean;
+  commands: string[];
 }
 
 export interface AnimeDramaTarget {
@@ -202,6 +212,7 @@ export interface AnimeDramaBlueprint {
   title: string;
   premise: string;
   target: AnimeDramaTarget;
+  phaseFlow: PhaseFlowControl;
   styleDirection: string;
   overlays: string[];
   phases: PhaseDefinition[];
