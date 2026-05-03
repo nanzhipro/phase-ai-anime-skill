@@ -5,6 +5,7 @@ import {
   AnimeDramaWorkflowInput,
   ArtifactPlan,
   AspectRatio,
+  GenerationCapabilitySpec,
   GenerationJobSpec,
   PhaseFlowControl,
   PhaseDefinition,
@@ -15,11 +16,11 @@ import {
   WorkflowNode,
 } from './types';
 
-const DEFAULT_DURATION_SECONDS = 75;
+const DEFAULT_DURATION_SECONDS = 15;
 const DEFAULT_EPISODE_COUNT = 1;
 const DEFAULT_LANGUAGE = 'zh-CN';
-const DEFAULT_STYLE = 'anime drama, clean line art, expressive acting, consistent character design';
-const DEFAULT_START_PHASE_ID = 'phase-0-concept-promise';
+const DEFAULT_STYLE = '15-second vertical anime drama, decisive first-3-second hook, clean line art, stable character consistency, and stage-by-stage manifest handoff';
+const DEFAULT_START_PHASE_ID = 'phase-0-screenplay-design';
 
 export function buildAnimeDramaWorkflow(
   input: AnimeDramaWorkflowInput
@@ -31,8 +32,15 @@ export function buildAnimeDramaWorkflow(
   const artifacts = createDefaultArtifacts();
   const sampleTimeline = createSampleTimeline(normalized);
   const providerContracts = createProviderContracts();
+  const generationCapabilities = createGenerationCapabilities(nodes, providerContracts);
   const generationJobs = createGenerationJobs(normalized, sampleTimeline);
-  const agents = createDefaultAgents(phases, nodes, artifacts, providerContracts);
+  const agents = createDefaultAgents(
+    phases,
+    nodes,
+    artifacts,
+    generationCapabilities,
+    providerContracts
+  );
 
   return {
     kind: 'phase-ai-anime-blueprint',
@@ -42,20 +50,22 @@ export function buildAnimeDramaWorkflow(
     target: normalized,
     phaseFlow,
     styleDirection: input.styleDirection?.trim() || DEFAULT_STYLE,
-    overlays: input.overlays?.length ? input.overlays : ['character-consistency', 'audio-lipsync', 'provider-jobs'],
+    overlays: input.overlays?.length ? input.overlays : ['single-video-mvp', 'character-consistency', 'provider-manifests'],
     phases,
     nodes,
+    generationCapabilities,
     agents,
     artifacts,
     sampleTimeline,
     providerContracts,
     generationJobs,
     qualityGates: [
-      'Every shot has shotId, duration, camera, action, promptRefs, and audioCues.',
-      'Every dialogue cue has speaker, text, timing, and emotion direction.',
-      'Generation jobs are provider-neutral and contain no API keys, tokens, cookies, or local private paths.',
-      'Assembly can be reconstructed from storyboard, timeline, jobs, and expected output paths.',
-      'Human approval is required before real provider calls or public release.',
+      'The screenplay package must fit one 15-second video and include beat-by-beat staging that can be shot as a manga-drama clip.',
+      'Character, world, and scene prompts must be categorized and linked through prompt/image/video manifests before generation begins.',
+      'Image generation outputs must be traceable through an image manifest so the next stage can reuse or regenerate exact assets.',
+      'Video generation must produce one deliverable clip for the current episode and record its lineage in a video manifest.',
+      'Generation jobs remain provider-neutral and must not contain API keys, tokens, cookies, or local private paths.',
+      'Each stage pauses for explicit user confirmation before the next stage consumes its manifest.',
     ],
     nextSteps: createNextSteps(phaseFlow),
   };
@@ -77,10 +87,10 @@ function createPhaseFlow(mode: AnimeDramaWorkflowInput['phaseFlowMode']): PhaseF
 
 function createNextSteps(phaseFlow: PhaseFlowControl): string[] {
   const defaultSteps = [
-    'Create plan/manifest.yaml from the selected profile and overlays.',
-    'Write phase-0 concept and production constraints before generating assets.',
-    'Upgrade future placeholder contracts only when planctl promotes them.',
-    'Choose provider adapters only after the offline blueprint passes review.',
+    'Write a 15-second design brief and a shootable screenplay package, then stop for user confirmation.',
+    'Expand the approved screenplay into character, world, and scene prompt packs, and record them in episode-001-prompt-manifest.json.',
+    'After prompt approval, generate image jobs and an image manifest for this single video only.',
+    'After image approval, generate the video job, track the result in a video manifest, and deliver one 15-second clip.',
   ];
 
   if (!phaseFlow.resetRequested) {
@@ -89,7 +99,7 @@ function createNextSteps(phaseFlow: PhaseFlowControl): string[] {
 
   return [
     `Run \`ruby scripts/planctl reset\` to clear completed phase state and restart from ${phaseFlow.startPhaseId}.`,
-    'After reset, rerun `ruby scripts/planctl advance --strict` before re-authoring phase-0 artifacts.',
+    'After reset, rerun `ruby scripts/planctl advance --strict` before re-authoring the screenplay package.',
     ...defaultSteps.slice(1),
   ];
 }
@@ -216,7 +226,7 @@ export function validateAnimeDramaBlueprint(
 
 function validateAgentSpecs(blueprint: AnimeDramaBlueprint, issues: string[]): void {
   if (blueprint.agents.length === 0) {
-    issues.push('agents must contain phase, node, and adapter contracts');
+    issues.push('agents must contain phase, node, capability, and adapter contracts');
     return;
   }
 
@@ -265,6 +275,12 @@ function validateAgentSpecs(blueprint: AnimeDramaBlueprint, issues: string[]): v
     }
   });
 
+  blueprint.generationCapabilities.forEach((capabilityItem) => {
+    if (!blueprint.agents.some((agent) => agent.role === 'capability' && agent.capabilityId === capabilityItem.id)) {
+      issues.push(`generation capability ${capabilityItem.id} is missing a capability agent`);
+    }
+  });
+
   blueprint.providerContracts.forEach((contractItem) => {
     if (!blueprint.agents.some((agent) => agent.role === 'adapter' && agent.adapterSlot === contractItem.adapterSlot)) {
       issues.push(`adapter slot ${contractItem.adapterSlot} is missing an adapter agent`);
@@ -290,12 +306,14 @@ function createDefaultAgents(
   phases: PhaseDefinition[],
   nodes: WorkflowNode[],
   artifacts: ArtifactPlan[],
+  generationCapabilities: GenerationCapabilitySpec[],
   providerContracts: ProviderContract[]
 ): AgentSpec[] {
   return [
     ...phases.map((phase) => createPhaseAgent(phase, phases)),
     ...nodes.map((nodeItem) => createNodeAgent(nodeItem, nodes, artifacts)),
-    ...providerContracts.map(createAdapterAgent),
+    ...generationCapabilities.map(createCapabilityAgent),
+    ...providerContracts.map((contractItem) => createAdapterAgent(contractItem, generationCapabilities)),
   ];
 }
 
@@ -323,6 +341,11 @@ function createPhaseAgent(
       `All required artifacts for ${phase.id} exist before handoff.`,
       'Phase output remains inside the current execution boundary.',
       'No future phase deliverables are mixed into this phase.',
+      ...(phase.requiresUserConfirmation
+        ? [
+            `User confirmation package is ready: ${phase.confirmationArtifacts.join(', ')}.`,
+          ]
+        : []),
     ],
     handoffArtifacts: phase.requiredArtifacts,
     forbiddenActions: [
@@ -331,13 +354,23 @@ function createPhaseAgent(
       'Do not publish, tag, archive, or make release decisions.',
     ],
     humanApprovalGates: [
+      ...(phase.requiresUserConfirmation
+        ? [
+            `User confirms ${phase.confirmationArtifacts.join(', ')} before the next phase starts.`,
+          ]
+        : []),
       'Real provider call approval.',
       'Public release, commercial use, tag, or archive decision.',
     ],
     handoff: {
       producedArtifacts: phase.requiredArtifacts,
       nextAgentIds: nextPhaseAgentIds(phase, phases),
-      notes: ['Update plan/handoff.md after the phase is objectively complete.'],
+      notes: uniqueStrings([
+        'Update plan/handoff.md after the phase is objectively complete.',
+        ...(phase.transitionManifest
+          ? [`Record downstream handoff state in ${phase.transitionManifest}.`]
+          : []),
+      ]),
     },
   };
 }
@@ -360,6 +393,9 @@ function createNodeAgent(
     purpose: `Produces the ${nodeItem.label} workflow node outputs while preserving input/output contracts.`,
     ownerPhaseId: ownerPhaseForNode(nodeItem, artifacts),
     nodeId: nodeItem.id,
+    capabilityId: capabilityIdForNode(nodeItem.id),
+    capabilityKind: capabilityKindForNode(nodeItem.id),
+    executionMode: capabilityExecutionModeForNode(nodeItem.id),
     inputs: upstreamArtifacts,
     outputs: nodeItem.outputs,
     allowedPaths: allowedPathsForArtifacts(nodeItem.outputs),
@@ -368,27 +404,102 @@ function createNodeAgent(
       `Outputs match the workflow node contract for ${nodeItem.id}.`,
       'Required artifacts are ready for the next node before handoff.',
       'Node changes do not break downstream inputs.',
+      ...(nodeItem.trackingManifest
+        ? [`Manifest ${nodeItem.trackingManifest} is updated before handoff.`]
+        : []),
     ],
     handoffArtifacts: nodeItem.outputs,
     forbiddenActions: [
       'Do not mutate upstream source artifacts outside the active phase contract.',
       'Do not write secrets, cookies, credentials, or private local paths.',
     ],
-    humanApprovalGates: nodeItem.type === 'generation' ? ['Real provider calls.'] : [],
+    humanApprovalGates: uniqueStrings([
+      ...(nodeItem.type === 'generation' ? ['Real provider calls.'] : []),
+      ...(nodeItem.requiresUserConfirmation
+        ? [
+            `User confirms outputs tracked by ${nodeItem.trackingManifest || nodeItem.outputs[0]} before downstream work continues.`,
+          ]
+        : []),
+    ]),
     handoff: {
       producedArtifacts: nodeItem.outputs,
       nextAgentIds: nextNodeAgentIds(nodeItem, nodes),
-      notes: ['Record any continuity, timing, or missing-input risk before handoff.'],
+      notes: uniqueStrings([
+        'Record any continuity, timing, or missing-input risk before handoff.',
+        ...(nodeItem.trackingManifest
+          ? [`Update ${nodeItem.trackingManifest} with the latest outputs and approval status.`]
+          : []),
+      ]),
     },
   };
 }
 
-function createAdapterAgent(contractItem: ProviderContract): AgentSpec {
+function createCapabilityAgent(capabilityItem: GenerationCapabilitySpec): AgentSpec {
+  return {
+    id: `${capabilityItem.id}-agent`,
+    label: `${capabilityItem.label} Agent`,
+    role: 'capability',
+    purpose: capabilityItem.purpose,
+    capabilityId: capabilityItem.id,
+    capabilityKind: capabilityItem.kind,
+    executionMode: capabilityItem.executionMode,
+    inputs: capabilityItem.inputs,
+    outputs: capabilityItem.outputs,
+    allowedPaths: allowedPathsForArtifacts(capabilityItem.outputs),
+    requiredArtifacts: capabilityItem.outputs,
+    qualityGates: [
+      'Reusable capability boundaries remain stable across providers and orchestration modes.',
+      `Reusable abilities are explicit: ${capabilityItem.reusableAbilities.join(', ')}.`,
+      `Specialized abilities remain isolated: ${capabilityItem.specializedAbilities.join(', ')}.`,
+      ...(capabilityItem.collaboratesWith.length > 0
+        ? [
+            `Collaboration handoff is explicit with ${capabilityItem.collaboratesWith.join(', ')} through ${capabilityItem.collaborationOutputs.join(', ')}.`,
+          ]
+        : []),
+    ],
+    handoffArtifacts: capabilityItem.outputs,
+    forbiddenActions: [
+      'Do not merge image and video capability concerns into one opaque agent.',
+      'Do not write secrets, cookies, credentials, or private local paths.',
+      'Do not bypass provider-neutral manifests when collaborating with another capability.',
+    ],
+    humanApprovalGates: [
+      'Real provider call approval.',
+      'Capability handoff artifacts are confirmed before downstream execution.',
+    ],
+    handoff: {
+      producedArtifacts: capabilityItem.outputs,
+      nextAgentIds: uniqueStrings([
+        ...capabilityItem.adapterSlots.map((adapterSlot) => `${adapterSlot}-agent`),
+        ...capabilityItem.collaboratesWith.map((capabilityId) => `${capabilityId}-agent`),
+      ]),
+      notes: uniqueStrings([
+        `Reusable abilities: ${capabilityItem.reusableAbilities.join(', ')}.`,
+        `Specialized abilities: ${capabilityItem.specializedAbilities.join(', ')}.`,
+      ]),
+    },
+  };
+}
+
+function createAdapterAgent(
+  contractItem: ProviderContract,
+  generationCapabilities: GenerationCapabilitySpec[]
+): AgentSpec {
+  const providerNote = contractItem.recommendedProviders.length > 0
+    ? `Recommended first adapters: ${contractItem.recommendedProviders.join(', ')}.`
+    : undefined
+  const capabilityItem = generationCapabilities.find((candidate) =>
+    candidate.adapterSlots.includes(contractItem.adapterSlot)
+  );
+
   return {
     id: `${contractItem.adapterSlot}-agent`,
     label: `${titleCase(contractItem.adapterSlot)} Agent`,
     role: 'adapter',
     purpose: `Translates validated provider-neutral ${contractItem.kind} jobs for the ${contractItem.adapterSlot} slot after human approval.`,
+    capabilityId: capabilityItem?.id,
+    capabilityKind: capabilityItem?.kind,
+    executionMode: capabilityItem?.executionMode,
     adapterSlot: contractItem.adapterSlot,
     inputs: contractItem.inputArtifacts,
     outputs: contractItem.outputArtifacts,
@@ -397,13 +508,16 @@ function createAdapterAgent(contractItem: ProviderContract): AgentSpec {
     qualityGates: [
       'Generation jobs validate against the provider contract before execution.',
       'Provider remains unassigned until a human chooses the concrete adapter.',
-      'Run reports record provider, model, cost, duration, and output checks outside source specs.',
+      `Run reports record provider, model, cost, duration, and output checks in ${contractItem.trackingManifest}.`,
     ],
     handoffArtifacts: contractItem.outputArtifacts,
     forbiddenActions: [
       'Do not store API keys, tokens, cookies, bearer headers, passwords, or account configuration in the repository.',
       'Do not mutate story, storyboard, audio timeline, prompt, or job source files during provider execution.',
       'Do not upload private input assets before explicit human approval.',
+      ...(capabilityItem
+        ? [`Do not absorb ${capabilityItem.id} reusable concerns into provider-specific request code.`]
+        : []),
     ],
     humanApprovalGates: [
       'Provider and model family.',
@@ -415,9 +529,267 @@ function createAdapterAgent(contractItem: ProviderContract): AgentSpec {
     handoff: {
       producedArtifacts: contractItem.outputArtifacts,
       nextAgentIds: [],
-      notes: ['Write a run report next to generated outputs when a real adapter is used.'],
+      notes: uniqueStrings([
+        `Write the run report into ${contractItem.trackingManifest} when a real adapter is used.`,
+        ...(providerNote ? [providerNote] : []),
+      ]),
     },
   };
+}
+
+function createGenerationCapabilities(
+  nodes: WorkflowNode[],
+  providerContracts: ProviderContract[]
+): GenerationCapabilitySpec[] {
+  const imageNode = findNode(nodes, 'image_generation');
+  const videoNode = findNode(nodes, 'video_generation');
+  const imageContract = findProviderContract(providerContracts, 'image_generation_adapter');
+  const videoContract = findProviderContract(providerContracts, 'video_generation_adapter');
+
+  return [
+    {
+      id: 'text-to-image-capability',
+      label: 'Text-to-Image Capability',
+      kind: 'text-to-image',
+      executionMode: 'standalone-or-collaborative',
+      purpose: 'Owns text-to-image planning, manifest-safe image generation handoff, and reusable image asset production as an independent capability that can also collaborate with downstream video generation.',
+      nodeIds: [imageNode.id],
+      adapterSlots: [imageContract.adapterSlot],
+      inputs: uniqueStrings([...imageNode.inputs, ...imageContract.inputArtifacts]),
+      outputs: uniqueStrings([
+        ...imageNode.outputs,
+        imageContract.trackingManifest,
+        ...imageContract.outputArtifacts,
+      ]),
+      reusableAbilities: [
+        'provider-neutral job validation',
+        'runtime preflight and approval gate handling',
+        'manifest update and lineage recording',
+        'asset path normalization and quality gate reporting',
+      ],
+      specializedAbilities: [
+        'prompt-to-image request planning',
+        'aspect-ratio to image-size mapping',
+        'image asset batching and anchor-frame production',
+      ],
+      collaborationInputs: ['anime/manifests/episode-001-prompt-manifest.json'],
+      collaborationOutputs: ['anime/manifests/episode-001-image-manifest.json'],
+      collaboratesWith: ['video-generation-capability'],
+    },
+    {
+      id: 'video-generation-capability',
+      label: 'Video Generation Capability',
+      kind: 'video-generation',
+      executionMode: 'standalone-or-collaborative',
+      purpose: 'Owns video generation orchestration, async task lifecycle handling, and final delivery assembly as an independent capability that can consume upstream image outputs when collaborating.',
+      nodeIds: [videoNode.id],
+      adapterSlots: [videoContract.adapterSlot],
+      inputs: uniqueStrings([...videoNode.inputs, ...videoContract.inputArtifacts]),
+      outputs: uniqueStrings([
+        ...videoNode.outputs,
+        videoContract.trackingManifest,
+        ...videoContract.outputArtifacts,
+      ]),
+      reusableAbilities: [
+        'provider-neutral job validation',
+        'runtime preflight and approval gate handling',
+        'manifest update and lineage recording',
+        'delivery review and output verification',
+      ],
+      specializedAbilities: [
+        'image-to-video and text-conditioned video planning',
+        'async submit-and-poll task orchestration',
+        'duration, resolution, ratio, and final mp4 handoff control',
+      ],
+      collaborationInputs: [
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/manifests/episode-001-audio-manifest.json',
+      ],
+      collaborationOutputs: ['anime/manifests/episode-001-video-manifest.json', 'anime/final/episode-001.mp4'],
+      collaboratesWith: [
+        'text-to-image-capability',
+        'tts-generation-capability',
+        'sfx-generation-capability',
+        'music-generation-capability',
+      ],
+    },
+    {
+      id: 'tts-generation-capability',
+      label: 'Text-to-Speech Capability',
+      kind: 'tts-generation',
+      executionMode: 'standalone-or-collaborative',
+      purpose: 'Owns dialogue-to-voice planning, speaker and emotion mapping, and reusable speech asset handoff as an independent capability that can also collaborate with SFX, music, and final video delivery.',
+      nodeIds: [],
+      adapterSlots: ['tts_generation_adapter'],
+      inputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      outputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/dialogue/**',
+      ],
+      reusableAbilities: [
+        'provider-neutral job validation',
+        'runtime preflight and approval gate handling',
+        'manifest update and lineage recording',
+        'asset path normalization and quality gate reporting',
+      ],
+      specializedAbilities: [
+        'script-to-voice planning',
+        'speaker, pacing, and emotion mapping',
+        'dialogue audio asset production and approval handoff',
+      ],
+      collaborationInputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      collaborationOutputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/dialogue/**',
+      ],
+      collaboratesWith: [
+        'sfx-generation-capability',
+        'music-generation-capability',
+        'video-generation-capability',
+      ],
+    },
+    {
+      id: 'sfx-generation-capability',
+      label: 'Sound Effects Capability',
+      kind: 'sfx-generation',
+      executionMode: 'standalone-or-collaborative',
+      purpose: 'Owns cue-to-effect planning, transient and ambience asset packaging, and reusable sound-effect handoff as an independent capability that can also collaborate with dialogue, music, and final video delivery.',
+      nodeIds: [],
+      adapterSlots: ['sfx_generation_adapter'],
+      inputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      outputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/sfx/**',
+      ],
+      reusableAbilities: [
+        'provider-neutral job validation',
+        'runtime preflight and approval gate handling',
+        'manifest update and lineage recording',
+        'asset path normalization and quality gate reporting',
+      ],
+      specializedAbilities: [
+        'cue-sheet to effect planning',
+        'impact, ambience, and transition sound design',
+        'sound-effect stem packaging and approval handoff',
+      ],
+      collaborationInputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      collaborationOutputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/sfx/**',
+      ],
+      collaboratesWith: [
+        'tts-generation-capability',
+        'music-generation-capability',
+        'video-generation-capability',
+      ],
+    },
+    {
+      id: 'music-generation-capability',
+      label: 'Music Scoring Capability',
+      kind: 'music-generation',
+      executionMode: 'standalone-or-collaborative',
+      purpose: 'Owns scoring brief design, motif and energy-arc planning, and reusable music stem handoff as an independent capability that can also collaborate with dialogue, SFX, and final video delivery.',
+      nodeIds: [],
+      adapterSlots: ['music_generation_adapter'],
+      inputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      outputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/music/**',
+      ],
+      reusableAbilities: [
+        'provider-neutral job validation',
+        'runtime preflight and approval gate handling',
+        'manifest update and lineage recording',
+        'asset path normalization and quality gate reporting',
+      ],
+      specializedAbilities: [
+        'score brief and motif planning',
+        'energy-arc, loop, and transition control',
+        'music stem packaging and approval handoff',
+      ],
+      collaborationInputs: [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      collaborationOutputs: [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/music/**',
+      ],
+      collaboratesWith: [
+        'tts-generation-capability',
+        'sfx-generation-capability',
+        'video-generation-capability',
+      ],
+    },
+  ];
+}
+
+function findNode(nodes: WorkflowNode[], nodeId: string): WorkflowNode {
+  const nodeItem = nodes.find((candidate) => candidate.id === nodeId);
+  if (!nodeItem) {
+    throw new Error(`Missing workflow node: ${nodeId}`);
+  }
+
+  return nodeItem;
+}
+
+function findProviderContract(
+  providerContracts: ProviderContract[],
+  adapterSlot: string
+): ProviderContract {
+  const contractItem = providerContracts.find((candidate) => candidate.adapterSlot === adapterSlot);
+  if (!contractItem) {
+    throw new Error(`Missing provider contract: ${adapterSlot}`);
+  }
+
+  return contractItem;
+}
+
+function capabilityIdForNode(nodeId: string): string | undefined {
+  switch (nodeId) {
+    case 'image_generation':
+      return 'text-to-image-capability';
+    case 'video_generation':
+      return 'video-generation-capability';
+    default:
+      return undefined;
+  }
+}
+
+function capabilityKindForNode(nodeId: string): GenerationCapabilitySpec['kind'] | undefined {
+  switch (nodeId) {
+    case 'image_generation':
+      return 'text-to-image';
+    case 'video_generation':
+      return 'video-generation';
+    default:
+      return undefined;
+  }
+}
+
+function capabilityExecutionModeForNode(nodeId: string): GenerationCapabilitySpec['executionMode'] | undefined {
+  switch (nodeId) {
+    case 'image_generation':
+    case 'video_generation':
+      return 'standalone-or-collaborative';
+    default:
+      return undefined;
+  }
 }
 
 function normalizeInput(input: AnimeDramaWorkflowInput): AnimeDramaTarget {
@@ -440,83 +812,165 @@ function normalizeInput(input: AnimeDramaWorkflowInput): AnimeDramaTarget {
 function createDefaultPhases(): PhaseDefinition[] {
   return [
     {
-      id: 'phase-0-concept-promise',
-      title: 'Lock anime drama promise and production constraints',
-      purpose: 'Define viewer promise, target platform, aspect ratio, duration, model-call depth, and non-goals.',
-      requiredArtifacts: ['anime/bible/concept.md', 'anime/bible/production-constraints.md'],
+      id: 'phase-0-screenplay-design',
+      title: 'Turn the idea into a shootable 15-second screenplay package',
+      purpose: 'Expand the premise into a design brief, beat-by-beat screenplay, and a script manifest that can be reviewed before prompts are written.',
+      requiredArtifacts: [
+        'anime/scripts/episode-001-design-brief.md',
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
       dependsOn: [],
+      requiresUserConfirmation: true,
+      confirmationArtifacts: [
+        'anime/scripts/episode-001-design-brief.md',
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      transitionManifest: 'anime/manifests/episode-001-script-manifest.json',
     },
     {
-      id: 'phase-1-cast-style-bible',
-      title: 'Build cast, scene, and style bible',
-      purpose: 'Create character anchors, scene anchors, visual style, voice direction, and continuity rules.',
-      requiredArtifacts: ['anime/bible/characters.md', 'anime/bible/style-bible.md'],
-      dependsOn: ['phase-0-concept-promise'],
+      id: 'phase-1-prompt-package',
+      title: 'Build character, world, and scene prompt foundations',
+      purpose: 'Translate the approved screenplay into categorized prompt packs and a prompt manifest that downstream generation stages can consume.',
+      requiredArtifacts: [
+        'anime/prompts/episode-001-character-prompts.yaml',
+        'anime/prompts/episode-001-world-prompts.yaml',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+        'anime/manifests/episode-001-prompt-manifest.json',
+      ],
+      dependsOn: ['phase-0-screenplay-design'],
+      requiresUserConfirmation: true,
+      confirmationArtifacts: [
+        'anime/prompts/episode-001-character-prompts.yaml',
+        'anime/prompts/episode-001-world-prompts.yaml',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+        'anime/manifests/episode-001-prompt-manifest.json',
+      ],
+      transitionManifest: 'anime/manifests/episode-001-prompt-manifest.json',
     },
     {
-      id: 'phase-2-episode-beat-sheet',
-      title: 'Design episode beats and retention rhythm',
-      purpose: 'Map hook, conflict, turns, payoff, and ending pull for the target duration.',
-      requiredArtifacts: ['anime/scripts/episode-001-beats.md'],
-      dependsOn: ['phase-1-cast-style-bible'],
+      id: 'phase-2-image-generation',
+      title: 'Generate the image pack for one approved video',
+      purpose: 'Produce provider-neutral image jobs, generated images, and an image manifest that records every reusable visual asset for this one video.',
+      requiredArtifacts: [
+        'anime/jobs/episode-001-image-jobs.json',
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/assets/images/episode-001/**',
+      ],
+      dependsOn: ['phase-1-prompt-package'],
+      requiresUserConfirmation: true,
+      confirmationArtifacts: [
+        'anime/jobs/episode-001-image-jobs.json',
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/assets/images/episode-001/**',
+      ],
+      transitionManifest: 'anime/manifests/episode-001-image-manifest.json',
     },
     {
-      id: 'phase-3-dialogue-voice-script',
-      title: 'Write dialogue, narration, subtitles, and voice direction',
-      purpose: 'Produce TTS-friendly dialogue with speaker, emotion, pacing, and subtitle constraints.',
-      requiredArtifacts: ['anime/scripts/episode-001-dialogue.md'],
-      dependsOn: ['phase-2-episode-beat-sheet'],
-    },
-    {
-      id: 'phase-4-shot-storyboard',
-      title: 'Translate beats into shot storyboard',
-      purpose: 'Create shot cards with timing, framing, action, camera movement, transitions, and audio hooks.',
-      requiredArtifacts: ['anime/storyboard/episode-001-shots.yaml'],
-      dependsOn: ['phase-3-dialogue-voice-script'],
-    },
-    {
-      id: 'phase-5-visual-prompt-pack',
-      title: 'Create image and video prompt pack',
-      purpose: 'Generate image prompts, video prompts, negative prompts, references, seeds, and consistency notes.',
-      requiredArtifacts: ['anime/prompts/episode-001-image-prompts.yaml', 'anime/prompts/episode-001-video-prompts.yaml'],
-      dependsOn: ['phase-4-shot-storyboard'],
-    },
-    {
-      id: 'phase-6-audio-timeline',
-      title: 'Build audio, subtitle, and lip-sync timeline',
-      purpose: 'Align dialogue, SFX, music, silence, subtitles, and action hit points on one timeline.',
-      requiredArtifacts: ['anime/audio/episode-001-timeline.yaml'],
-      dependsOn: ['phase-5-visual-prompt-pack'],
-    },
-    {
-      id: 'phase-7-generation-job-specs',
-      title: 'Export provider-neutral generation job specs',
-      purpose: 'Prepare image, video, TTS, SFX, music, and assembly jobs without binding provider secrets.',
-      requiredArtifacts: ['anime/jobs/episode-001-generation-jobs.json'],
-      dependsOn: ['phase-6-audio-timeline'],
-    },
-    {
-      id: 'phase-8-assembly-qc',
-      title: 'Create final assembly manifest and QA checklist',
-      purpose: 'Define final video structure, missing assets, sync checks, release checklist, and next iteration focus.',
-      requiredArtifacts: ['anime/assembly/episode-001-assembly.json', 'anime/review/episode-001-qc.md'],
-      dependsOn: ['phase-7-generation-job-specs'],
+      id: 'phase-3-video-generation',
+      title: 'Generate one 15-second manga-drama video deliverable',
+      purpose: 'Use the approved image manifest to produce a single video job, the final clip, and a delivery review package.',
+      requiredArtifacts: [
+        'anime/jobs/episode-001-video-jobs.json',
+        'anime/manifests/episode-001-video-manifest.json',
+        'anime/final/episode-001.mp4',
+        'anime/review/episode-001-delivery.md',
+      ],
+      dependsOn: ['phase-2-image-generation'],
+      requiresUserConfirmation: true,
+      confirmationArtifacts: [
+        'anime/jobs/episode-001-video-jobs.json',
+        'anime/manifests/episode-001-video-manifest.json',
+        'anime/final/episode-001.mp4',
+        'anime/review/episode-001-delivery.md',
+      ],
+      transitionManifest: 'anime/manifests/episode-001-video-manifest.json',
     },
   ];
 }
 
 function createDefaultNodes(): WorkflowNode[] {
   return [
-    node('concept_intake', 'Concept Intake', 'creative', [], ['anime/bible/concept.md'], [], false, false),
-    node('cast_style_bible', 'Cast and Style Bible', 'creative', ['concept_intake'], ['anime/bible/characters.md', 'anime/bible/style-bible.md'], ['concept_intake'], false, false),
-    node('episode_beats', 'Episode Beats', 'creative', ['cast_style_bible'], ['anime/scripts/episode-001-beats.md'], ['cast_style_bible'], false, false),
-    node('dialogue_script', 'Dialogue and Voice Script', 'creative', ['episode_beats'], ['anime/scripts/episode-001-dialogue.md'], ['episode_beats'], false, false),
-    node('shot_storyboard', 'Shot Storyboard', 'storyboard', ['dialogue_script'], ['anime/storyboard/episode-001-shots.yaml'], ['dialogue_script'], false, false),
-    node('visual_prompt_pack', 'Visual Prompt Pack', 'prompting', ['shot_storyboard'], ['anime/prompts/episode-001-image-prompts.yaml', 'anime/prompts/episode-001-video-prompts.yaml'], ['shot_storyboard'], false, false),
-    node('audio_timeline', 'Audio Timeline', 'audio', ['dialogue_script', 'shot_storyboard'], ['anime/audio/episode-001-timeline.yaml'], ['dialogue_script', 'shot_storyboard'], false, false),
-    node('generation_job_specs', 'Generation Job Specs', 'generation', ['visual_prompt_pack', 'audio_timeline'], ['anime/jobs/episode-001-generation-jobs.json'], ['visual_prompt_pack', 'audio_timeline'], false, false),
-    node('assembly_manifest', 'Assembly Manifest', 'assembly', ['generation_job_specs'], ['anime/assembly/episode-001-assembly.json'], ['generation_job_specs'], false, false),
-    node('human_qc', 'Human QC', 'review', ['assembly_manifest'], ['anime/review/episode-001-qc.md'], ['assembly_manifest'], true, true),
+    node(
+      'screenplay_design',
+      'Screenplay Design Package',
+      'creative',
+      [],
+      [
+        'anime/scripts/episode-001-design-brief.md',
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      [],
+      false,
+      false,
+      true,
+      'anime/manifests/episode-001-script-manifest.json'
+    ),
+    node(
+      'prompt_package',
+      'Prompt Foundation Package',
+      'prompting',
+      ['screenplay_design'],
+      [
+        'anime/prompts/episode-001-character-prompts.yaml',
+        'anime/prompts/episode-001-world-prompts.yaml',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+        'anime/manifests/episode-001-prompt-manifest.json',
+      ],
+      [
+        'anime/scripts/episode-001-design-brief.md',
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      false,
+      false,
+      true,
+      'anime/manifests/episode-001-prompt-manifest.json'
+    ),
+    node(
+      'image_generation',
+      'Image Generation Batch',
+      'generation',
+      ['prompt_package'],
+      [
+        'anime/jobs/episode-001-image-jobs.json',
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/assets/images/episode-001/**',
+      ],
+      [
+        'anime/prompts/episode-001-character-prompts.yaml',
+        'anime/prompts/episode-001-world-prompts.yaml',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+        'anime/manifests/episode-001-prompt-manifest.json',
+      ],
+      false,
+      false,
+      true,
+      'anime/manifests/episode-001-image-manifest.json'
+    ),
+    node(
+      'video_generation',
+      'Video Generation Batch',
+      'generation',
+      ['image_generation'],
+      [
+        'anime/jobs/episode-001-video-jobs.json',
+        'anime/manifests/episode-001-video-manifest.json',
+        'anime/final/episode-001.mp4',
+        'anime/review/episode-001-delivery.md',
+      ],
+      [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/assets/images/episode-001/**',
+      ],
+      false,
+      false,
+      true,
+      'anime/manifests/episode-001-video-manifest.json'
+    ),
   ];
 }
 
@@ -528,7 +982,9 @@ function node(
   outputs: string[],
   inputs: string[],
   optional: boolean,
-  deletable: boolean
+  deletable: boolean,
+  requiresUserConfirmation: boolean,
+  trackingManifest?: string
 ): WorkflowNode {
   return {
     id,
@@ -541,6 +997,8 @@ function node(
     dependsOn,
     optional,
     deletable,
+    requiresUserConfirmation,
+    trackingManifest,
   };
 }
 
@@ -561,19 +1019,20 @@ function replacementOptions(type: WorkflowNode['type']): string[] {
 
 function createDefaultArtifacts(): ArtifactPlan[] {
   return [
-    artifact('anime/bible/concept.md', 'markdown', 'Series promise, audience, platform, aspect ratio, duration, and non-goals.', 'phase-0-concept-promise'),
-    artifact('anime/bible/production-constraints.md', 'markdown', 'Model-call depth, content boundaries, release constraints, and provider approval gates.', 'phase-0-concept-promise'),
-    artifact('anime/bible/characters.md', 'markdown', 'Character anchors for appearance, behavior, expression, and voice.', 'phase-1-cast-style-bible'),
-    artifact('anime/bible/style-bible.md', 'markdown', 'Visual style, camera language, palette, lighting, and forbidden drift.', 'phase-1-cast-style-bible'),
-    artifact('anime/scripts/episode-001-beats.md', 'markdown', 'Hook, beat map, escalation, payoff, and ending pull.', 'phase-2-episode-beat-sheet'),
-    artifact('anime/scripts/episode-001-dialogue.md', 'markdown', 'TTS-friendly dialogue, narration, subtitles, and voice direction.', 'phase-3-dialogue-voice-script'),
-    artifact('anime/storyboard/episode-001-shots.yaml', 'yaml', 'Shot cards with timing, framing, action, camera, and prompt refs.', 'phase-4-shot-storyboard'),
-    artifact('anime/prompts/episode-001-image-prompts.yaml', 'yaml', 'Image prompts, reference placeholders, seeds, and negative prompts.', 'phase-5-visual-prompt-pack'),
-    artifact('anime/prompts/episode-001-video-prompts.yaml', 'yaml', 'Image-to-video prompts, motion controls, and transition notes.', 'phase-5-visual-prompt-pack'),
-    artifact('anime/audio/episode-001-timeline.yaml', 'yaml', 'Dialogue, SFX, music, silence, captions, and action hit points.', 'phase-6-audio-timeline'),
-    artifact('anime/jobs/episode-001-generation-jobs.json', 'json', 'Provider-neutral image, video, TTS, SFX, music, and assembly jobs.', 'phase-7-generation-job-specs'),
-    artifact('anime/assembly/episode-001-assembly.json', 'json', 'Final assembly manifest with clip, audio, subtitle, and gap tracking.', 'phase-8-assembly-qc'),
-    artifact('anime/review/episode-001-qc.md', 'markdown', 'Human review checklist for continuity, sync, policy, and release decisions.', 'phase-8-assembly-qc'),
+    artifact('anime/scripts/episode-001-design-brief.md', 'markdown', '15-second video goal, hook, audience promise, shot count target, and production constraints.', 'phase-0-screenplay-design'),
+    artifact('anime/scripts/episode-001-screenplay.md', 'markdown', 'Shootable screenplay for one 15-second manga-drama video with beats, shots, and confirmation questions.', 'phase-0-screenplay-design'),
+    artifact('anime/manifests/episode-001-script-manifest.json', 'json', 'Tracks screenplay package versions, review status, and downstream handoff inputs.', 'phase-0-screenplay-design'),
+    artifact('anime/prompts/episode-001-character-prompts.yaml', 'yaml', 'Character prompt pack with reusable looks, expressions, costumes, and anchor poses.', 'phase-1-prompt-package'),
+    artifact('anime/prompts/episode-001-world-prompts.yaml', 'yaml', 'World prompt pack with environmental rules, props, lighting, and atmosphere.', 'phase-1-prompt-package'),
+    artifact('anime/prompts/episode-001-scene-prompts.yaml', 'yaml', 'Scene prompt pack for each screenplay beat and shot transition.', 'phase-1-prompt-package'),
+    artifact('anime/manifests/episode-001-prompt-manifest.json', 'json', 'Maps screenplay beats to categorized character/world/scene prompts for reuse.', 'phase-1-prompt-package'),
+    artifact('anime/jobs/episode-001-image-jobs.json', 'json', 'Provider-neutral image generation jobs for the approved single-video prompt package.', 'phase-2-image-generation'),
+    artifact('anime/manifests/episode-001-image-manifest.json', 'json', 'Records image asset lineage, approval state, and reuse decisions for the current video.', 'phase-2-image-generation'),
+    artifact('anime/assets/images/episode-001/**', 'directory', 'Generated image assets referenced by the image manifest.', 'phase-2-image-generation'),
+    artifact('anime/jobs/episode-001-video-jobs.json', 'json', 'Provider-neutral video generation jobs for the approved image set.', 'phase-3-video-generation'),
+    artifact('anime/manifests/episode-001-video-manifest.json', 'json', 'Tracks video generation inputs, output lineage, review notes, and final delivery status.', 'phase-3-video-generation'),
+    artifact('anime/final/episode-001.mp4', 'video', 'Single 15-second manga-drama deliverable for the current episode.', 'phase-3-video-generation'),
+    artifact('anime/review/episode-001-delivery.md', 'markdown', 'Delivery review with final clip notes, approval decision, and next iteration risks.', 'phase-3-video-generation'),
   ];
 }
 
@@ -587,50 +1046,49 @@ function artifact(
 }
 
 function createSampleTimeline(target: AnimeDramaTarget): ShotTimeline[] {
-  const hookEnd = Math.min(3, target.episodeDurationSeconds);
-  const midEnd = Math.max(hookEnd + 1, Math.round(target.episodeDurationSeconds * 0.58));
+  const hookEnd = Math.min(4, target.episodeDurationSeconds);
+  const midEnd = Math.max(hookEnd + 2, Math.round(target.episodeDurationSeconds * 0.7));
   const finalEnd = target.episodeDurationSeconds;
 
   return [
     {
-      shotId: 'shot-001-hook',
+      shotId: 'shot-001-open-hook',
       startSeconds: 0,
       endSeconds: hookEnd,
-      visualIntent: 'Open with the protagonist already inside a sharp visual contradiction or immediate danger.',
+      visualIntent: 'Open with the core contradiction of the episode already visible in one vertical-safe image.',
       camera: 'fast push-in, vertical-safe close-up',
-      action: 'The protagonist freezes as the impossible object speaks first.',
-      promptRefs: ['anime/prompts/episode-001-image-prompts.yaml#shot-001-hook'],
+      action: 'The protagonist discovers the impossible clue and makes the audience understand the goal in seconds.',
+      promptRefs: ['anime/prompts/episode-001-scene-prompts.yaml#scene-001-hook'],
       audioCues: [
-        cue('cue-001-sfx', 'sfx', 0, 0.6, 'impact hit'),
-        cue('cue-002-dialogue', 'dialogue', 0.6, hookEnd, '你听见了吗？它在叫我的名字。', 'protagonist', 'startled whisper'),
-        cue('cue-003-subtitle', 'subtitle', 0.6, hookEnd, '你听见了吗？它在叫我的名字。'),
+        cue('cue-001-dialogue', 'dialogue', 0.5, hookEnd, '它不是失踪，是在躲我。', 'protagonist', 'uneasy realization'),
+        cue('cue-002-subtitle', 'subtitle', 0.5, hookEnd, '它不是失踪，是在躲我。'),
       ],
     },
     {
-      shotId: 'shot-002-escalation',
+      shotId: 'shot-002-pursuit-turn',
       startSeconds: hookEnd,
       endSeconds: midEnd,
-      visualIntent: 'Reveal the goal, obstacle, and cost with readable staging.',
-      camera: 'medium shot to over-the-shoulder, slight handheld drift',
-      action: 'The protagonist chooses between leaving safely and chasing the clue.',
-      promptRefs: ['anime/prompts/episode-001-video-prompts.yaml#shot-002-escalation'],
+      visualIntent: 'Show the escalating obstacle and lock the visual motifs that the image stage must preserve.',
+      camera: 'medium shot to over-the-shoulder with a hard vertical rack focus',
+      action: 'The protagonist follows the clue into the scene and pays a visible price for continuing.',
+      promptRefs: ['anime/prompts/episode-001-scene-prompts.yaml#scene-002-turn'],
       audioCues: [
-        cue('cue-004-music', 'music', hookEnd, midEnd, 'low pulsing synth with rising strings'),
-        cue('cue-005-dialogue', 'dialogue', hookEnd + 1, midEnd - 1, '如果现在不追，它就会永远消失。', 'protagonist', 'resolved'),
+        cue('cue-003-dialogue', 'dialogue', hookEnd + 0.6, midEnd - 0.8, '再往前一步，我就得承认它真的认识我。', 'protagonist', 'strained resolve'),
+        cue('cue-004-subtitle', 'subtitle', hookEnd + 0.6, midEnd - 0.8, '再往前一步，我就得承认它真的认识我。'),
       ],
     },
     {
-      shotId: 'shot-003-ending-pull',
+      shotId: 'shot-003-cliffhanger-reveal',
       startSeconds: midEnd,
       endSeconds: finalEnd,
-      visualIntent: 'End on a concrete unanswered question or emotional reversal.',
+      visualIntent: 'Land one reversal that justifies the entire 15-second video and makes the final frame reusable as marketing art.',
       camera: 'cut to extreme close-up, hold, then smash cut to black',
-      action: 'The clue reveals a second voice that should not exist.',
-      promptRefs: ['anime/prompts/episode-001-video-prompts.yaml#shot-003-ending-pull'],
+      action: 'The final image reveals the truth and freezes on a new question.',
+      promptRefs: ['anime/prompts/episode-001-scene-prompts.yaml#scene-003-reveal'],
       audioCues: [
-        cue('cue-006-silence', 'silence', midEnd, midEnd + 0.5, 'breath pause'),
-        cue('cue-007-dialogue', 'dialogue', midEnd + 0.5, finalEnd - 0.5, '别相信她。真正失踪的人，是你。', 'mystery_voice', 'calm and intimate'),
-        cue('cue-008-sfx', 'sfx', finalEnd - 0.5, finalEnd, 'hard cut glitch'),
+        cue('cue-005-silence', 'silence', midEnd, midEnd + 0.4, 'breath pause'),
+        cue('cue-006-dialogue', 'dialogue', midEnd + 0.4, finalEnd - 0.4, '别找耳机了，昨晚失踪的人其实是你。', 'mystery_voice', 'calm and intimate'),
+        cue('cue-007-subtitle', 'subtitle', midEnd + 0.4, finalEnd - 0.4, '别找耳机了，昨晚失踪的人其实是你。'),
       ],
     },
   ];
@@ -658,11 +1116,83 @@ function cue(
 
 function createProviderContracts(): ProviderContract[] {
   return [
-    contract('image', 'image_generation_adapter', ['anime/prompts/episode-001-image-prompts.yaml'], ['anime/assets/images/**'], ['promptRef', 'aspectRatio', 'styleRef', 'characterRefs'], ['apiKey', 'api_key', 'token', 'cookie', 'secret']),
-    contract('video', 'image_to_video_adapter', ['anime/prompts/episode-001-video-prompts.yaml', 'anime/assets/images/**'], ['anime/assets/video/**'], ['promptRef', 'firstFrame', 'durationSeconds', 'camera'], ['apiKey', 'api_key', 'token', 'cookie', 'secret']),
-    contract('tts', 'tts_adapter', ['anime/scripts/episode-001-dialogue.md', 'anime/audio/episode-001-timeline.yaml'], ['anime/assets/audio/voice/**'], ['speaker', 'text', 'emotion', 'language'], ['apiKey', 'api_key', 'token', 'cookie', 'secret']),
-    contract('sfx', 'sfx_adapter', ['anime/audio/episode-001-timeline.yaml'], ['anime/assets/audio/sfx/**'], ['cue', 'durationSeconds', 'intensity'], ['apiKey', 'api_key', 'token', 'cookie', 'secret']),
-    contract('assembly', 'assembly_adapter', ['anime/assembly/episode-001-assembly.json'], ['anime/final/**'], ['clips', 'audio', 'subtitles', 'timeline'], ['apiKey', 'api_key', 'token', 'cookie', 'secret']),
+    contract(
+      'image',
+      'image_generation_adapter',
+      [
+        'anime/prompts/episode-001-character-prompts.yaml',
+        'anime/prompts/episode-001-world-prompts.yaml',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+        'anime/manifests/episode-001-prompt-manifest.json',
+      ],
+      ['anime/assets/images/episode-001/**'],
+      'anime/manifests/episode-001-image-manifest.json',
+      ['promptRef', 'assetId', 'aspectRatio', 'sourceManifest', 'category'],
+      ['apiKey', 'api_key', 'token', 'cookie', 'secret'],
+      ['volcengine-seedream']
+    ),
+    contract(
+      'video',
+      'video_generation_adapter',
+      [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/prompts/episode-001-scene-prompts.yaml',
+      ],
+      ['anime/final/episode-001.mp4'],
+      'anime/manifests/episode-001-video-manifest.json',
+      ['sourceManifest', 'imageManifest', 'durationSeconds', 'aspectRatio', 'shotPlan'],
+      ['apiKey', 'api_key', 'token', 'cookie', 'secret'],
+      ['volcengine-seedance']
+    ),
+    contract(
+      'tts',
+      'tts_generation_adapter',
+      [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/dialogue/**',
+      ],
+      'anime/manifests/episode-001-audio-manifest.json',
+      ['sourceManifest', 'screenplayPath', 'language', 'voicePlan'],
+      ['apiKey', 'api_key', 'token', 'cookie', 'secret'],
+      ['volcengine-openspeech-tts']
+    ),
+    contract(
+      'sfx',
+      'sfx_generation_adapter',
+      [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/sfx/**',
+      ],
+      'anime/manifests/episode-001-audio-manifest.json',
+      ['sourceManifest', 'screenplayPath', 'cueSheet', 'timingSource'],
+      ['apiKey', 'api_key', 'token', 'cookie', 'secret'],
+      ['custom-http-sfx']
+    ),
+    contract(
+      'music',
+      'music_generation_adapter',
+      [
+        'anime/scripts/episode-001-screenplay.md',
+        'anime/manifests/episode-001-script-manifest.json',
+      ],
+      [
+        'anime/manifests/episode-001-audio-manifest.json',
+        'anime/assets/audio/episode-001/music/**',
+      ],
+      'anime/manifests/episode-001-audio-manifest.json',
+      ['sourceManifest', 'screenplayPath', 'musicBrief', 'timingSource'],
+      ['apiKey', 'api_key', 'token', 'cookie', 'secret'],
+      ['custom-http-music']
+    ),
   ];
 }
 
@@ -671,53 +1201,115 @@ function contract(
   adapterSlot: string,
   inputArtifacts: string[],
   outputArtifacts: string[],
+  trackingManifest: string,
   requiredFields: string[],
-  forbiddenFields: string[]
+  forbiddenFields: string[],
+  recommendedProviders: string[]
 ): ProviderContract {
-  return { kind, adapterSlot, inputArtifacts, outputArtifacts, requiredFields, forbiddenFields };
+  return {
+    kind,
+    adapterSlot,
+    inputArtifacts,
+    outputArtifacts,
+    trackingManifest,
+    requiredFields,
+    forbiddenFields,
+    recommendedProviders,
+  };
 }
 
 function createGenerationJobs(
   target: AnimeDramaTarget,
   timeline: ShotTimeline[]
 ): GenerationJobSpec[] {
-  const firstShot = timeline[0];
-  const dialogueCue = firstShot.audioCues.find((cueItem) => cueItem.kind === 'dialogue');
+  const [firstShot, , thirdShot] = timeline;
+  const imageManifestPath = 'anime/manifests/episode-001-image-manifest.json';
+  const videoManifestPath = 'anime/manifests/episode-001-video-manifest.json';
+  const audioManifestPath = 'anime/manifests/episode-001-audio-manifest.json';
+  const scriptManifestPath = 'anime/manifests/episode-001-script-manifest.json';
 
   return [
     {
-      jobId: 'job-image-shot-001-keyframe',
+      jobId: 'job-image-character-anchor',
       kind: 'image',
       provider: 'unassigned',
       adapterSlot: 'image_generation_adapter',
+      manifestPath: imageManifestPath,
       input: {
-        promptRef: firstShot.promptRefs[0],
+        promptRef: 'anime/prompts/episode-001-character-prompts.yaml#lead-detective',
+        assetId: 'lead-detective-anchor',
         aspectRatio: target.aspectRatio,
-        styleRef: 'anime/bible/style-bible.md',
-        characterRefs: ['anime/bible/characters.md'],
+        sourceManifest: 'anime/manifests/episode-001-prompt-manifest.json',
+        category: 'character',
       },
       output: {
-        expectedPath: 'anime/assets/images/shot-001-keyframe.png',
+        expectedPath: 'anime/assets/images/episode-001/lead-detective-anchor.png',
         format: 'png',
       },
       safety: {
         storesSecrets: false,
-        requiresHumanApproval: false,
+        requiresHumanApproval: true,
       },
     },
     {
-      jobId: 'job-video-shot-001',
-      kind: 'video',
+      jobId: 'job-image-scene-hook',
+      kind: 'image',
       provider: 'unassigned',
-      adapterSlot: 'image_to_video_adapter',
+      adapterSlot: 'image_generation_adapter',
+      manifestPath: imageManifestPath,
       input: {
-        promptRef: 'anime/prompts/episode-001-video-prompts.yaml#shot-001-hook',
-        firstFrame: 'anime/assets/images/shot-001-keyframe.png',
-        durationSeconds: firstShot.endSeconds - firstShot.startSeconds,
-        camera: firstShot.camera,
+        promptRef: firstShot.promptRefs[0],
+        assetId: firstShot.shotId,
+        aspectRatio: target.aspectRatio,
+        sourceManifest: 'anime/manifests/episode-001-prompt-manifest.json',
+        category: 'scene',
       },
       output: {
-        expectedPath: 'anime/assets/video/shot-001.mp4',
+        expectedPath: 'anime/assets/images/episode-001/shot-001-open-hook.png',
+        format: 'png',
+      },
+      safety: {
+        storesSecrets: false,
+        requiresHumanApproval: true,
+      },
+    },
+    {
+      jobId: 'job-image-scene-reveal',
+      kind: 'image',
+      provider: 'unassigned',
+      adapterSlot: 'image_generation_adapter',
+      manifestPath: imageManifestPath,
+      input: {
+        promptRef: thirdShot.promptRefs[0],
+        assetId: thirdShot.shotId,
+        aspectRatio: target.aspectRatio,
+        sourceManifest: 'anime/manifests/episode-001-prompt-manifest.json',
+        category: 'scene',
+      },
+      output: {
+        expectedPath: 'anime/assets/images/episode-001/shot-003-cliffhanger-reveal.png',
+        format: 'png',
+      },
+      safety: {
+        storesSecrets: false,
+        requiresHumanApproval: true,
+      },
+    },
+    {
+      jobId: 'job-video-episode-001',
+      kind: 'video',
+      provider: 'unassigned',
+      adapterSlot: 'video_generation_adapter',
+      manifestPath: videoManifestPath,
+      input: {
+        sourceManifest: videoManifestPath,
+        imageManifest: imageManifestPath,
+        durationSeconds: target.episodeDurationSeconds,
+        aspectRatio: target.aspectRatio,
+        shotPlan: 'anime/scripts/episode-001-screenplay.md',
+      },
+      output: {
+        expectedPath: 'anime/final/episode-001.mp4',
         format: 'mp4',
       },
       safety: {
@@ -726,18 +1318,61 @@ function createGenerationJobs(
       },
     },
     {
-      jobId: 'job-tts-shot-001-dialogue',
+      jobId: 'job-tts-dialogue-episode-001',
       kind: 'tts',
       provider: 'unassigned',
-      adapterSlot: 'tts_adapter',
+      adapterSlot: 'tts_generation_adapter',
+      manifestPath: audioManifestPath,
       input: {
-        speaker: dialogueCue?.speaker || 'protagonist',
-        text: dialogueCue?.text || '',
-        emotion: dialogueCue?.emotion || 'neutral',
+        sourceManifest: scriptManifestPath,
+        screenplayPath: 'anime/scripts/episode-001-screenplay.md',
         language: target.language,
+        voicePlan: 'anime/audio/episode-001-voice-plan.yaml',
       },
       output: {
-        expectedPath: 'anime/assets/audio/voice/shot-001-dialogue.wav',
+        expectedPath: 'anime/assets/audio/episode-001/dialogue/dialogue-main.mp3',
+        format: 'mp3',
+      },
+      safety: {
+        storesSecrets: false,
+        requiresHumanApproval: true,
+      },
+    },
+    {
+      jobId: 'job-sfx-episode-001',
+      kind: 'sfx',
+      provider: 'unassigned',
+      adapterSlot: 'sfx_generation_adapter',
+      manifestPath: audioManifestPath,
+      input: {
+        sourceManifest: scriptManifestPath,
+        screenplayPath: 'anime/scripts/episode-001-screenplay.md',
+        cueSheet: 'anime/audio/episode-001-sfx-cues.yaml',
+        timingSource: 'anime/audio/episode-001-timeline.yaml',
+      },
+      output: {
+        expectedPath: 'anime/assets/audio/episode-001/sfx/sfx-main.wav',
+        format: 'wav',
+      },
+      safety: {
+        storesSecrets: false,
+        requiresHumanApproval: true,
+      },
+    },
+    {
+      jobId: 'job-music-episode-001',
+      kind: 'music',
+      provider: 'unassigned',
+      adapterSlot: 'music_generation_adapter',
+      manifestPath: audioManifestPath,
+      input: {
+        sourceManifest: scriptManifestPath,
+        screenplayPath: 'anime/scripts/episode-001-screenplay.md',
+        musicBrief: 'anime/audio/episode-001-music-brief.md',
+        timingSource: 'anime/audio/episode-001-timeline.yaml',
+      },
+      output: {
+        expectedPath: 'anime/assets/audio/episode-001/music/music-main.wav',
         format: 'wav',
       },
       safety: {

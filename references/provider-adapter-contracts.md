@@ -1,6 +1,6 @@
 # Provider Adapter Contracts
 
-Provider adapter contracts describe how provider-neutral generation jobs can later be translated into concrete API, CLI, or manual tool calls. This phase defines contracts only. It does not call any provider.
+Provider adapter contracts describe how provider-neutral generation jobs can later be translated into concrete API, CLI, or manual tool calls. Jobs still remain neutral in source manifests, but this package now includes optional built-in runtime helpers for Volcengine image generation, Seedance video generation, official Volcengine OpenSpeech TTS, and configurable custom HTTP audio runtimes for SFX/music when a human explicitly selects those providers and supplies runtime credentials plus resolved prompt/media inputs.
 
 ## Boundary
 
@@ -41,9 +41,9 @@ Each `GenerationJobSpec` declares:
 - required input fields are present;
 - forbidden fields such as `apiKey`, `api_key`, `token`, `cookie`, `secret`, `password`, `credential`, `authorization`, and private local paths are absent.
 
-## Future Adapter Implementation
+## Adapter Implementation
 
-A future provider-specific adapter should be a replaceable edge node, not part of the core workflow builder. It should:
+A provider-specific adapter should be a replaceable edge node, not part of the core workflow builder. It should:
 
 1. Read a validated `GenerationJobSpec`.
 2. Resolve credentials from environment variables or a secure runtime store outside the repository.
@@ -51,6 +51,17 @@ A future provider-specific adapter should be a replaceable edge node, not part o
 4. Write outputs to `output.expectedPath` or a documented artifact path.
 5. Write a small run report with provider name, model/version, duration, cost estimate, and output checks.
 6. Never mutate story, storyboard, audio timeline, or prompt source files during a provider call.
+
+The current built-in helpers follow that rule:
+
+- `createVolcengineImageGenerationPlan` and `executeVolcengineImageGeneration` target `image_generation_adapter` with `volcengine-seedream`.
+- `createVolcengineSeedanceVideoPlan` and `executeVolcengineSeedanceVideoGeneration` target `video_generation_adapter` with `volcengine-seedance`.
+- `createVolcengineOpenSpeechTtsPlan` and `executeVolcengineOpenSpeechTts` target `tts_generation_adapter` with `volcengine-openspeech-tts`.
+- `createCustomHttpSfxGenerationPlan` / `executeCustomHttpSfxGeneration` and `createCustomHttpMusicGenerationPlan` / `executeCustomHttpMusicGeneration` target `sfx_generation_adapter` and `music_generation_adapter` with a provider-explicit custom HTTP submit/poll flow.
+- Image and video runtimes require `ARK_API_KEY` (or an explicit `apiKey`) at execution time and never write credentials back into repository artifacts.
+- Volcengine OpenSpeech TTS requires an access token plus explicit `appId` and `resourceId`; the helper models the official `submit -> query` task lifecycle.
+- Custom HTTP SFX/music runtimes require a provider-specific submit URL, query URL template, model, prompt, and authentication token before real execution can begin.
+- Seedance execution is modeled as `submit -> poll`, matching the official async task lifecycle.
 
 ## Adapter Agent Rules
 

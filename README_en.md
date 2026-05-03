@@ -1,6 +1,6 @@
 # phase-ai-anime-skill
 
-**About**: A long-running workflow Skill for AI anime drama, manga-motion, and storyboard-to-video projects. It turns story design, dialogue, shot planning, image prompts, video prompts, TTS, sound, subtitles, generation jobs, and final assembly into disk-backed phases that can survive context compression and model handoffs.
+**About**: A workflow Skill for AI anime drama, manga-motion, and storyboard-to-video projects. The default path now focuses on a 15-second single-video MVP: turn an idea into a shootable screenplay, derive categorized prompts and manifests, generate images, then generate one video so the whole production loop works before expanding to longer videos.
 
 > _"Put the story, shots, and sound on disk before asking models to generate."_
 
@@ -13,33 +13,32 @@
 
 ## What It Does
 
-AI anime drama production often fails between tools: character drift, style drift, weak shot continuity, dialogue that does not match timing, sound cues that miss actions, and model outputs that cannot be assembled. This Skill externalizes production state into files and lets `planctl` enforce phase order, recovery, and completion.
+AI anime drama production often fails between tools: the screenplay no longer matches the shots, prompt packs get lost, generated assets cannot be reused, and the next model stage no longer knows which inputs were approved. This Skill externalizes that state into files and lets `planctl` enforce phase order, confirmation gates, recovery, and completion.
 
-The MVP does not call external model APIs. It creates a provider-neutral production blueprint first:
+The MVP does not force real provider calls up front. It creates a provider-neutral 15-second single-video blueprint first:
 
-- Series promise, audience, aspect ratio, duration, and non-goals.
-- Character, scene, and style bible for consistency.
-- Episode beat sheet, dialogue script, subtitle strategy, and voice direction.
-- Shot-level storyboard, image prompts, video prompts, negative prompts, reference placeholders, and seed strategy.
-- Unified audio-video timeline covering shots, action, dialogue, SFX, music, silence, and subtitles.
+- A 15-second design brief, shootable screenplay, and script manifest.
+- Categorized character, world, and scene prompt packs plus a prompt manifest.
+- Provider-neutral image jobs, an image manifest, and reusable image asset paths.
+- A provider-neutral video job, a video manifest, and the final delivery path.
 - Phase/Node/Adapter agent contracts so every phase, creative node, and provider edge can be handed off independently.
-- Generation job specs that can later connect to OpenAI, Gemini/Veo, Runway, Luma, Kling, Pika, ElevenLabs, local ComfyUI, FFmpeg, or custom adapters.
-- Final assembly manifest for editing, QA, and publishing.
+- Explicit user confirmation after each stage before the next stage consumes its manifest.
+- Provider-neutral adapters with recommended first integrations such as Volcengine image and Volcengine Seedance video.
 
 ## Best Fit
 
-- **Vertical AI drama shorts**: 45-90 second episodes with a three-second hook and a strong ending pull.
+- **15-second vertical AI drama MVPs**: get one short video working end to end before scaling up.
 - **Cinematic pilot episodes**: stronger shot grammar, emotional continuity, and audiovisual pacing.
 - **Webtoon motion**: convert panels into shots, camera moves, subtitles, and voice cues.
 - **Character IP shorts**: lock voice, visual anchors, expressions, catchphrases, and repeatable behavior.
-- **Multi-model pipelines**: replace image, video, voice, SFX, music, or assembly nodes without changing the whole plan.
+- **Multi-model pipelines**: replace image or video nodes first, then expand to audio and longer-form delivery once the short loop is stable.
 
 ## Quick Start
 
 Tell the Agent:
 
 ```text
-Use phase-ai-anime-skill to build a 60-second vertical AI anime drama from this idea: <your premise>
+Use phase-ai-anime-skill to build a 15-second vertical AI anime drama from this idea: <your premise>
 ```
 
 Once a plan exists:
@@ -68,29 +67,26 @@ const workflow = buildAnimeDramaWorkflow({
   title: 'The Cat-Eared Detective at the Rainy Convenience Store',
   premise: 'A water-fearing cat-eared detective must recover a missing talking earbud during a storm.',
   targetPlatform: 'vertical-short',
-  episodeDurationSeconds: 75,
+  episodeDurationSeconds: 15,
 });
 ```
 
 If an `animeSkillHandler` query starts with `reset phase:`, `restart from phase 0:`, or equivalent wording, the handler marks the blueprint as a phase-0 restart and returns the reset guidance via `phaseFlow` and `nextSteps`.
 
+The default next step chain is: confirm the screenplay package, confirm the prompt package, confirm the image manifest, then run video generation for one 15-second clip.
+
 ## Main Phase Chain
 
 | Phase | Output | Purpose |
 | --- | --- | --- |
-| 0. Concept Promise | Promise, audience, aspect ratio, duration, boundaries | Decide why viewers watch |
-| 1. Cast Style Bible | Characters, settings, style, camera language | Protect consistency |
-| 2. Episode Beat Sheet | Hook, beats, escalation, ending pull | Shape retention |
-| 3. Dialogue Voice Script | Dialogue, narration, subtitles, voice direction | Make characters speak |
-| 4. Shot Storyboard | Shot list, framing, action, transitions | Make scenes executable |
-| 5. Visual Prompt Pack | Image/video prompts, seeds, references | Feed generation models |
-| 6. Audio Timeline | TTS, SFX, music, captions, pauses | Synchronize audio and picture |
-| 7. Generation Job Specs | Provider-neutral jobs | Enable adapters |
-| 8. Assembly QC | Assembly manifest, QA, release package | Build the final video structure |
+| 0. Screenplay Design | design brief, screenplay, script manifest | Turn the idea into a shootable 15-second script package |
+| 1. Prompt Package | character/world/scene prompts, prompt manifest | Prepare categorized prompts and bridge data for generation |
+| 2. Image Generation | image jobs, image manifest, image assets | Generate the image foundation for one approved video |
+| 3. Video Generation | video job, video manifest, final mp4, delivery review | Generate one 15-second deliverable clip |
 
 ## Pluggable Agents
 
-`workflow.agents` splits the chain into three independent handoff units: Phase Agents own phase contracts and handoff, Node Agents own creative node inputs, outputs, and quality gates, and Adapter Agents own provider connections after human approval. Inserting a workflow node requires a matching Node Agent contract.
+`workflow.agents` splits the chain into three independent handoff units: Phase Agents own phase contracts, confirmation gates, and handoff; Node Agents own creative node inputs, outputs, and manifest updates; Adapter Agents own provider connections after human approval. Inserting a workflow node requires a matching Node Agent contract.
 
 ## Development
 

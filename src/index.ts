@@ -152,9 +152,25 @@ export {
   validateAnimeDramaBlueprint,
 };
 export {
+  createCustomHttpMusicGenerationPlan,
+  createCustomHttpSfxGenerationPlan,
   createAdapterRegistry,
+  createVolcengineImageGenerationPlan,
+  createVolcengineOpenSpeechTtsPlan,
+  createVolcengineSeedanceVideoPlan,
+  executeCustomHttpMusicGeneration,
+  executeCustomHttpSfxGeneration,
+  executeVolcengineImageGeneration,
+  executeVolcengineOpenSpeechTts,
+  executeVolcengineSeedanceVideoGeneration,
   validateGenerationJobAgainstContract,
   validateGenerationJobsAgainstContracts,
 } from './adapters';
+export {
+  checkVolcengineRuntimeEnvironment,
+  resolveVolcengineRuntimeApiKey,
+  assertVolcengineRuntimeEnvironmentReady,
+} from './runtime-env';
 
+export * from './agents/generation';
 export * from './types';

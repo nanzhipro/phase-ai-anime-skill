@@ -4,7 +4,16 @@
   "description": "Provider-neutral phase workflow toolkit for AI anime drama production.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "phase-ai-anime-generation-agent": "dist/agents/generation/bin/generation-agent.js",
+    "phase-ai-anime-text-to-image-agent": "dist/agents/generation/bin/text-to-image-agent.js",
+    "phase-ai-anime-video-generation-agent": "dist/agents/generation/bin/video-generation-agent.js",
+    "phase-ai-anime-tts-generation-agent": "dist/agents/generation/bin/tts-generation-agent.js",
+    "phase-ai-anime-sfx-generation-agent": "dist/agents/generation/bin/sfx-generation-agent.js",
+    "phase-ai-anime-music-generation-agent": "dist/agents/generation/bin/music-generation-agent.js"
+  },
   "files": [
+    ".env.example",
     "dist/",
     "SKILL.md",
     "README_en.md",
@@ -12,12 +21,16 @@
     "references/",
     "profiles/",
     "examples/",
-    "scripts/planctl.rb"
+    "scripts/planctl.rb",
+    "scripts/check-runtime-env.js"
   ],
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "check:env": "node scripts/check-runtime-env.js",
+    "demo:agents": "npm run build && node dist/agents/generation/bin/text-to-image-agent.js --example && node dist/agents/generation/bin/video-generation-agent.js --example && node dist/agents/generation/bin/tts-generation-agent.js --example && node dist/agents/generation/bin/sfx-generation-agent.js --example && node dist/agents/generation/bin/music-generation-agent.js --example",
     "test": "jest",
+    "test:agents": "jest --runInBand src/agents/generation",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint 'src/**/*.ts'",

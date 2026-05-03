@@ -47,21 +47,32 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.kind).toBe('phase-ai-anime-blueprint');
     expect(blueprint.target.platform).toBe('vertical-short');
     expect(blueprint.target.aspectRatio).toBe('9:16');
+    expect(blueprint.target.episodeDurationSeconds).toBe(15);
     expect(blueprint.target.modelCallDepth).toBe('offline-spec-only');
     expect(blueprint.phaseFlow).toEqual(
       expect.objectContaining({
         mode: 'standard',
-        startPhaseId: 'phase-0-concept-promise',
+        startPhaseId: 'phase-0-screenplay-design',
         resetRequested: false,
       })
     );
-    expect(blueprint.phases).toHaveLength(9);
-    expect(blueprint.nodes.map((node) => node.id)).toContain('audio_timeline');
+    expect(blueprint.phases).toHaveLength(4);
+    expect(blueprint.phases.every((phase) => phase.requiresUserConfirmation)).toBe(true);
+    expect(blueprint.nodes.map((node) => node.id)).toContain('image_generation');
+    expect(blueprint.generationCapabilities.map((capability) => capability.id)).toEqual(
+      expect.arrayContaining([
+        'text-to-image-capability',
+        'video-generation-capability',
+        'tts-generation-capability',
+        'sfx-generation-capability',
+        'music-generation-capability',
+      ])
+    );
     expect(blueprint.agents.map((agent) => agent.role)).toEqual(
-      expect.arrayContaining(['phase', 'node', 'adapter'])
+      expect.arrayContaining(['phase', 'node', 'capability', 'adapter'])
     );
     expect(blueprint.artifacts.map((artifact) => artifact.path)).toContain(
-      'anime/jobs/episode-001-generation-jobs.json'
+      'anime/manifests/episode-001-image-manifest.json'
     );
     expect(validateAnimeDramaBlueprint(blueprint)).toEqual([]);
   });
@@ -76,6 +87,7 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.target.aspectRatio).toBe('16:9');
     expect(blueprint.generationJobs.every((job) => job.provider === 'unassigned')).toBe(true);
     expect(JSON.stringify(blueprint.generationJobs).toLowerCase()).not.toContain('api_key');
+    expect(blueprint.generationJobs.every((job) => job.manifestPath.includes('manifest'))).toBe(true);
     expect(blueprint.sampleTimeline[blueprint.sampleTimeline.length - 1].endSeconds).toBe(180);
   });
 
@@ -88,7 +100,7 @@ describe('buildAnimeDramaWorkflow', () => {
     expect(blueprint.phaseFlow).toEqual(
       expect.objectContaining({
         mode: 'reset-phase-0',
-        startPhaseId: 'phase-0-concept-promise',
+        startPhaseId: 'phase-0-screenplay-design',
         resetRequested: true,
       })
     );
@@ -101,14 +113,104 @@ describe('workflow agent contracts', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '一台复古录音机每天重播主角还没说出口的话。' });
 
     expect(blueprint.agents).toHaveLength(
-      blueprint.phases.length + blueprint.nodes.length + blueprint.providerContracts.length
+      blueprint.phases.length +
+        blueprint.nodes.length +
+        blueprint.generationCapabilities.length +
+        blueprint.providerContracts.length
     );
     expect(blueprint.agents).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ role: 'phase', ownerPhaseId: 'phase-4-shot-storyboard' }),
-        expect.objectContaining({ role: 'node', nodeId: 'shot_storyboard' }),
-        expect.objectContaining({ role: 'adapter', adapterSlot: 'image_to_video_adapter' }),
+        expect.objectContaining({ role: 'phase', ownerPhaseId: 'phase-1-prompt-package' }),
+        expect.objectContaining({ role: 'node', nodeId: 'prompt_package' }),
+        expect.objectContaining({
+          role: 'capability',
+          capabilityId: 'text-to-image-capability',
+          capabilityKind: 'text-to-image',
+          executionMode: 'standalone-or-collaborative',
+        }),
+        expect.objectContaining({ role: 'adapter', adapterSlot: 'video_generation_adapter' }),
       ])
+    );
+  });
+
+  it('separates reusable and specialized capability concerns for image and video generation', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '便利店屋檐下的耳机开始指挥一场只持续 15 秒的追逐。' });
+
+    const imageCapability = blueprint.generationCapabilities.find(
+      (capability) => capability.id === 'text-to-image-capability'
+    );
+    const videoCapability = blueprint.generationCapabilities.find(
+      (capability) => capability.id === 'video-generation-capability'
+    );
+
+    expect(imageCapability).toEqual(
+      expect.objectContaining({
+        executionMode: 'standalone-or-collaborative',
+        collaboratesWith: ['video-generation-capability'],
+      })
+    );
+    expect(imageCapability?.reusableAbilities).toEqual(
+      expect.arrayContaining(['provider-neutral job validation', 'manifest update and lineage recording'])
+    );
+    expect(imageCapability?.specializedAbilities).toEqual(
+      expect.arrayContaining(['prompt-to-image request planning'])
+    );
+
+    expect(videoCapability).toEqual(
+      expect.objectContaining({
+        executionMode: 'standalone-or-collaborative',
+        collaboratesWith: expect.arrayContaining([
+          'text-to-image-capability',
+          'tts-generation-capability',
+          'sfx-generation-capability',
+          'music-generation-capability',
+        ]),
+      })
+    );
+    expect(videoCapability?.reusableAbilities).toEqual(
+      expect.arrayContaining(['provider-neutral job validation', 'runtime preflight and approval gate handling'])
+    );
+    expect(videoCapability?.specializedAbilities).toEqual(
+      expect.arrayContaining(['async submit-and-poll task orchestration'])
+    );
+  });
+
+  it('adds standalone-or-collaborative audio capabilities for tts, sfx, and music', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '旧耳机把雨夜所有脚步声都转录成了旋律。' });
+
+    const ttsCapability = blueprint.generationCapabilities.find(
+      (capability) => capability.id === 'tts-generation-capability'
+    );
+    const sfxCapability = blueprint.generationCapabilities.find(
+      (capability) => capability.id === 'sfx-generation-capability'
+    );
+    const musicCapability = blueprint.generationCapabilities.find(
+      (capability) => capability.id === 'music-generation-capability'
+    );
+
+    expect(ttsCapability).toEqual(
+      expect.objectContaining({
+        executionMode: 'standalone-or-collaborative',
+        adapterSlots: ['tts_generation_adapter'],
+        collaboratesWith: expect.arrayContaining([
+          'sfx-generation-capability',
+          'music-generation-capability',
+          'video-generation-capability',
+        ]),
+      })
+    );
+    expect(ttsCapability?.reusableAbilities).toEqual(
+      expect.arrayContaining(['provider-neutral job validation'])
+    );
+    expect(ttsCapability?.specializedAbilities).toEqual(
+      expect.arrayContaining(['script-to-voice planning'])
+    );
+
+    expect(sfxCapability?.specializedAbilities).toEqual(
+      expect.arrayContaining(['cue-sheet to effect planning'])
+    );
+    expect(musicCapability?.specializedAbilities).toEqual(
+      expect.arrayContaining(['score brief and motif planning'])
     );
   });
 
@@ -116,11 +218,11 @@ describe('workflow agent contracts', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '便利店收银机突然开始打印未来的悔意。' });
     const invalidBlueprint = {
       ...blueprint,
-      agents: blueprint.agents.filter((agent) => agent.id !== 'phase-0-concept-promise-agent'),
+      agents: blueprint.agents.filter((agent) => agent.id !== 'phase-0-screenplay-design-agent'),
     };
 
     expect(validateAnimeDramaBlueprint(invalidBlueprint)).toContain(
-      'phase phase-0-concept-promise is missing a phase agent'
+      'phase phase-0-screenplay-design is missing a phase agent'
     );
   });
 
@@ -128,11 +230,25 @@ describe('workflow agent contracts', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '少女发现自己的影子已经替她拍完了预告片。' });
     const invalidBlueprint = {
       ...blueprint,
-      agents: blueprint.agents.filter((agent) => agent.id !== 'audio_timeline-agent'),
+      agents: blueprint.agents.filter((agent) => agent.id !== 'image_generation-agent'),
     };
 
     expect(validateAnimeDramaBlueprint(invalidBlueprint)).toContain(
-      'workflow node audio_timeline is missing a node agent'
+      'workflow node image_generation is missing a node agent'
+    );
+  });
+
+  it('reports a missing capability agent', () => {
+    const blueprint = buildAnimeDramaWorkflow({ premise: '一支会梦游的耳机把最后一个镜头提前泄露了。' });
+    const invalidBlueprint = {
+      ...blueprint,
+      agents: blueprint.agents.filter(
+        (agent) => agent.id !== 'video-generation-capability-agent'
+      ),
+    };
+
+    expect(validateAnimeDramaBlueprint(invalidBlueprint)).toContain(
+      'generation capability video-generation-capability is missing a capability agent'
     );
   });
 });
@@ -144,17 +260,19 @@ describe('workflow node mutations', () => {
       id: 'platform_caption_review',
       label: 'Platform Caption Review',
       type: 'review',
-      inputs: ['anime/audio/episode-001-timeline.yaml'],
+      inputs: ['anime/manifests/episode-001-video-manifest.json'],
       outputs: ['anime/review/platform-caption-review.md'],
       requiredArtifacts: ['anime/review/platform-caption-review.md'],
       replaceableBy: ['human-review'],
-      dependsOn: ['audio_timeline'],
+      dependsOn: ['video_generation'],
       optional: true,
       deletable: true,
+      requiresUserConfirmation: false,
+      trackingManifest: 'anime/manifests/episode-001-video-manifest.json',
     };
     const agent = createNodeAgentForTest(node);
 
-    const result = insertWorkflowNode(blueprint, node, 'audio_timeline', agent);
+    const result = insertWorkflowNode(blueprint, node, 'video_generation', agent);
 
     expect(result.success).toBe(true);
     expect(result.workflow?.nodes.map((item) => item.id)).toContain('platform_caption_review');
@@ -168,16 +286,18 @@ describe('workflow node mutations', () => {
       id: 'policy_caption_review',
       label: 'Policy Caption Review',
       type: 'review',
-      inputs: ['anime/audio/episode-001-timeline.yaml'],
+      inputs: ['anime/manifests/episode-001-video-manifest.json'],
       outputs: ['anime/review/policy-caption-review.md'],
       requiredArtifacts: ['anime/review/policy-caption-review.md'],
       replaceableBy: ['human-review'],
-      dependsOn: ['audio_timeline'],
+      dependsOn: ['video_generation'],
       optional: true,
       deletable: true,
+      requiresUserConfirmation: false,
+      trackingManifest: 'anime/manifests/episode-001-video-manifest.json',
     };
 
-    const result = insertWorkflowNode(blueprint, node, 'audio_timeline');
+    const result = insertWorkflowNode(blueprint, node, 'video_generation');
 
     expect(result.success).toBe(false);
     expect(result.error).toBe('Node agent is required for inserted node: policy_caption_review');
@@ -186,19 +306,41 @@ describe('workflow node mutations', () => {
   it('prevents removing a node used by downstream nodes', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '便利店门口的自动贩卖机开始预告明天。' });
 
-    const result = removeWorkflowNode(blueprint, 'audio_timeline');
+    const result = removeWorkflowNode(blueprint, 'image_generation');
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('generation_job_specs');
+    expect(result.error).toContain('video_generation');
   });
 
-  it('can remove a deletable terminal review node', () => {
+  it('can remove an inserted deletable terminal review node', () => {
     const blueprint = buildAnimeDramaWorkflow({ premise: '一位失眠少女每晚都被同一段片尾曲叫醒。' });
+    const node: WorkflowNode = {
+      id: 'delivery_gate_review',
+      label: 'Delivery Gate Review',
+      type: 'review',
+      inputs: ['anime/manifests/episode-001-video-manifest.json'],
+      outputs: ['anime/review/delivery-gate-review.md'],
+      requiredArtifacts: ['anime/review/delivery-gate-review.md'],
+      replaceableBy: ['human-review'],
+      dependsOn: ['video_generation'],
+      optional: true,
+      deletable: true,
+      requiresUserConfirmation: false,
+      trackingManifest: 'anime/manifests/episode-001-video-manifest.json',
+    };
+    const insertResult = insertWorkflowNode(
+      blueprint,
+      node,
+      'video_generation',
+      createNodeAgentForTest(node)
+    );
 
-    const result = removeWorkflowNode(blueprint, 'human_qc');
+    expect(insertResult.success).toBe(true);
+
+    const result = removeWorkflowNode(insertResult.workflow!, 'delivery_gate_review');
 
     expect(result.success).toBe(true);
-    expect(result.workflow?.nodes.map((node) => node.id)).not.toContain('human_qc');
+    expect(result.workflow?.nodes.map((node) => node.id)).not.toContain('delivery_gate_review');
   });
 });
 
@@ -212,7 +354,29 @@ describe('provider adapter contracts', () => {
       blueprint.providerContracts
     );
 
-    expect(registry.map((entry) => entry.status)).toContain('contract-only');
+    expect(blueprint.generationJobs.map((job) => job.adapterSlot)).toEqual(
+      expect.arrayContaining([
+        'image_generation_adapter',
+        'video_generation_adapter',
+        'tts_generation_adapter',
+        'sfx_generation_adapter',
+        'music_generation_adapter',
+      ])
+    );
+    expect(registry.map((entry) => entry.status)).toEqual([
+      'available',
+      'available',
+      'available',
+      'available',
+      'available',
+    ]);
+    expect(registry.map((entry) => entry.trackingManifest)).toEqual(
+      expect.arrayContaining([
+        'anime/manifests/episode-001-image-manifest.json',
+        'anime/manifests/episode-001-video-manifest.json',
+        'anime/manifests/episode-001-audio-manifest.json',
+      ])
+    );
     expect(result.valid).toBe(true);
     expect(result.issues).toEqual([]);
   });
@@ -268,7 +432,7 @@ describe('animeSkillHandler', () => {
     expect(result.data?.title).toBe('会说话的黑板');
     expect(result.data?.target.episodeDurationSeconds).toBe(60);
     expect(result.data?.providerContracts.map((contract) => contract.adapterSlot)).toContain(
-      'image_to_video_adapter'
+      'video_generation_adapter'
     );
   });
 
@@ -305,7 +469,7 @@ function createNodeAgentForTest(node: WorkflowNode): AgentSpec {
     label: `${node.label} Agent`,
     role: 'node',
     purpose: `Test agent for ${node.id}.`,
-    ownerPhaseId: 'phase-6-audio-timeline',
+    ownerPhaseId: 'phase-3-video-generation',
     nodeId: node.id,
     inputs: node.inputs,
     outputs: node.outputs,
@@ -317,7 +481,7 @@ function createNodeAgentForTest(node: WorkflowNode): AgentSpec {
     humanApprovalGates: [],
     handoff: {
       producedArtifacts: node.outputs,
-      nextAgentIds: ['generation_job_specs-agent'],
+      nextAgentIds: [],
       notes: ['Inserted during test.'],
     },
   };
